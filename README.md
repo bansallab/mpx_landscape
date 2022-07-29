@@ -15,7 +15,8 @@ Pre-run analyses and estimates that can be used by others without re-running the
 * `us-by-state.csv` contains percentage susceptible estimates at the state level in the U.S.
 * `variola-major-sensitivity.csv` contains percentage susceptible estimates at the admin-1 level for _Variola major_ (assuming 91.1% vaccine effectiveness)
 * `variola-minor-sensitivity.csv` contains percentage susceptible estimates at the admin-1 level for _Variola minor_ (assuming 74.9% vaccine effectiveness)
-* `world-admin1-age-data.csv` contains a manipulation of the GPW data to show the expected 2020 population size in each 5-year age class for each admin-1 region
+* `TableS1.csv` contains smallpox vaccination coverage and cessation estimates, lower and upper bounds, and sources for values used in our analyses. We anticipate this resource will change as more historical data become available.
+* `TableS2.csv` contains a manipulation of the GPW data to show the expected 2020 population size in each 5-year age class for each admin-1 region
 
 ## Data (`data/`)
 Inputs for data analysis can be found in this folder, outputs from running the code will populate here.

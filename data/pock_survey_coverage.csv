@@ -1,0 +1,73 @@
+Country,Year,Population,Total examined,Total pockmarks,Total percentage,Preschool examined,Preschool with pockmarks,Preschool percentage,School age examined,School age with pockmarks,School age percentage,Adults examined,Adults with pockmarks,Adult percentage,Source,Notes,UN_region
+Afghanistan,1969,,,,,1123.00,3.00,0.27,1617.00,23.00,1.42,2259.00,81.00,3.59,RB 668,"considering 0-4 as preschool, 5-14 as school-aged, and over 15 as adults; broken down by whether vaccination campaign had been conducted, aggregating these together",Southern Asia
+Angola,1978,,,,,81572.00,1.00,0.00,444401.00,177.00,0.04,218454.00,1807.00,0.83,RB 1211,,Central Africa
+Bahrain,1978,270000,,,,25623.00,1.00,0.00,,,,,,,RB 1220,children < 10,Western Asia
+Bangladesh,1976,,465892,4306,0.92,,,,,,,,,,RB 1191,"has attack date, target population was 0-19 years, sample was 1% random cluster",Southern Asia
+Bangladesh,1977,80000000,465892,,1.10,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+"Bangladesh, Areas visited by International Commission",1977,,50000,,1.20,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+Benin,1975-76,,188722,,,12881.00,0.00,0.00,175841.00,208.00,0.12,0.00,,,RB 1165,"preschool, primary school, over primary school age",West Africa
+Bhutan,1976,,16699,11,0.07,,,,,,,,,,RB 802,all children under 15 in Southern Bhutan,Southern Asia
+Botswana,1978-79,840000,166573,,,16654.00,0.00,0.00,111899.00,6.00,0.01,38020.00,99.00,0.26,RB 1203,,Southern Africa
+Botswana,1979,,30230,,,1766.00,0.00,0.00,23978.00,62.00,0.26,4486.00,22.00,0.49,RB 1204,,Southern Africa
+Burkina Faso,1975-76,,117522,,,24014.00,0.00,0.00,74256.00,13.00,0.02,19252.00,46.00,0.24,RB 1165,"preschool, primary school, over primary school age",West Africa
+Burma,1977,31420000,,,,,,,1924095.00,,0.00,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,survey among schoolchildren under 14,Southeast Asia
+"Burma, Arakan",1975,,3000,,1.00,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southeast Asia
+"Burma, Areas visited by International Commission",1977,,58000,,0.70,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southeast Asia
+Burundi,1976-77,3900000,77574,,,6000.00,0.00,0.00,71574.00,18.00,0.03,0.00,,,RB 1169,,East Africa
+Cameroon,1976-77,7900000,326819,,,14428.00,0.00,0.00,312391.00,6.00,0.00,0.00,,,RB 1169,,Central Africa
+Central African Republic,1976-77,2100000,119277,,,17920.00,0.00,0.00,101357.00,0.00,0.00,0.00,,,RB 1169,,Central Africa
+Chad,1976-77,4200000,158849,,,13802.00,0.00,0.00,130806.00,78.00,0.06,14241.00,1.00,0.01,RB 1169,,Central Africa
+China,1979,,15661,125,0.01,1231.00,0.00,0.00,8715.00,0.00,0.00,5715.00,125.00,2.19,https://apps.who.int/iris/bitstream/handle/10665/68284/WHO_SE_79.151.pdf?sequence=1&isAllowed=y,Tibet and Western China,East Asia
+"China, Yunnan Province",1979,,,,,,0.00,,,0.00,,< 26263,1020.00,> 3.88,RB 1258,,East Asia
+"China, Yunnan Province, Kunming Municipality",1979,,20102,57,0.28,,,,,,,,,,RB 1258,,East Asia
+Congo,1976-77,1400000,93162,,,7440.00,0.00,0.00,80935.00,19.00,0.02,4787.00,0.00,0.00,RB 1169,,Central Africa
+Equatorial Guinea,1976-77,300000,8942,,,353.00,0.00,0.00,8589.00,0.00,0.00,0.00,,,RB 1169,,Central Africa
+Gabon,1976-77,1000000,71331,,,5298.00,0.00,0.00,66033.00,55.00,0.08,,1.00,,RB 1169,,Central Africa
+Gambia,1975-76,,24694,,,2481.00,0.00,0.00,11207.00,8.00,0.07,11006.00,33.00,0.30,RB 1165,"preschool, primary school, over primary school age",West Africa
+Ghana,1975-76,,724465,,,20074.00,0.00,0.00,454215.00,5.00,0.00,240176.00,56.00,0.02,RB 1165,"preschool, primary school, over primary school age",West Africa
+Guinea,1975-76,,68263,,,0.00,,,68263.00,546.00,0.80,0.00,,,RB 1165,"preschool, primary school, over primary school age",West Africa
+Guinea-Bissau,1975-76,,28156,,,1463.00,0.00,0.00,26408.00,0.00,0.00,285.00,2.00,0.70,RB 1165,"preschool, primary school, over primary school age",West Africa
+"India, Andaman and Nicobar Islands",1976,115113,17000,,0.10,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+"India, Bastar",1976,1514000,8736,,3.80,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+"India, Ladakh",1976,104250,1010,,2.70,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+"India, Mizoram",1976,332390,1420,,0.70,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+"India, Sikkim",1975,255497,1495,,2.80,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southern Asia
+"Indonesia, South Sulawesi",1974,,459,,0.90,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,,Southeast Asia
+Ivory Coast,1975-76,,236194,,,960.00,0.00,0.00,235234.00,144.00,0.06,0.00,,,RB 1165,"preschool, primary school, over primary school age",West Africa
+Kuwait,1978,1130000,,,,80791.00,0.00,0.00,,,,,,,RB 1220,,Western Asia
+Lesotho,1978-79,1280000,236858,,,24541.00,0.00,0.00,126379.00,0.00,0.00,85938.00,55.00,0.06,RB 1203,,Southern Africa
+Lesotho,1979,,15229,,,218.00,0.00,0.00,12241.00,0.00,0.00,2770.00,2.00,0.07,RB 1204,,Southern Africa
+Liberia,1975-76,,77717,,,4316.00,0.00,0.00,34545.00,5.00,0.01,38856.00,31.00,0.08,RB 1165,"preschool, primary school, over primary school age",West Africa
+Malawi,1977-78,,,,,19844.00,0.00,,242068.00,737.00,0.30,42050.00,179.00,0.43,RB 1201,,East Africa
+Mali,1975-76,,412271,,,76735.00,0.00,0.00,246087.00,75.00,0.03,89449.00,93.00,0.10,RB 1165,"preschool, primary school, over primary school age",West Africa
+Mauritania,1975-76,,63382,,,19665.00,0.00,0.00,43717.00,0.00,0.00,0.00,,,RB 1165,"preschool, primary school, over primary school age",West Africa
+Mozambique,1977-78,,,,,6303.00,0.00,0.00,69543.00,161.00,0.23,70908.00,523.00,0.74,RB 1201,,East Africa
+Mozambique,1976-78,,7379265,35589,,,,,,,,,,,RB 1201,,East Africa
+Namibia,1978,,,,,1260.00,0.00,0.00,27913.00,0.00,0.00,2983.00,3.00,0.10,RB 1208,"age groups are 0-5, 6-15, 15+",Southern Africa
+Nepal,1976,,2350,,1.80,,,,,,,,,,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,Tibetan refugees surveyed at camps,Southern Asia
+Niger,1975-76,,49990,,,1384.00,0.00,0.00,44794.00,71.00,0.16,3812.00,5.00,0.13,RB 1165,"preschool, primary school, over primary school age",West Africa
+Nigeria,1975-76,67700000,3840828,,,1387227.00,0.00,0.00,1860563.00,2923.00,0.16,593038.00,3789.00,0.64,RB 1165,"preschool, primary school, over primary school",West Africa
+Oman,1978,810000,,,,67060.00,1.00,0.00,,,,,,,RB 1220,,Western Asia
+"Pakistan, Mohmand",1976,,,,,172.00,2.00,1.16,325.00,16.00,4.92,359.00,33.00,9.19,RB 708,"adults age group is men only, 0-4 are being categorized as preschoo, 5-15 as school age",Southern Asia
+Qatar,1978,190000,,,,15242.00,0.00,0.00,,,,,,,RB 1220,,Western Asia
+Rwanda,1976-77,4700000,81149,,,9109.00,0.00,0.00,72040.00,6.00,0.01,0.00,,,RB 1169,,Central Africa
+Saudi Arabia,1978,7630000,,,,158075.00,0.00,0.00,,,,,,,RB 1220,,Western Asia
+Senegal,1975-76,,257388,,,2639.00,0.00,0.00,82223.00,61.00,0.07,172526.00,113.00,0.07,RB 1165,"preschool, primary school, over primary school age",West Africa
+Sierra Leone,1975-76,,230437,,,68079.00,0.00,0.00,162358.00,104.00,0.06,0.00,,,RB 1165,"preschool, primary school, over primary school age",West Africa
+South Africa,1978,,,,,13855.00,0.00,0.00,272242.00,0.00,0.00,47402.00,4.00,0.01,RB 1207,"age groups are 0-5, 6-15, > 15, also has urban/rural breakdown",Southern Africa
+Sudan,1975-1978,,,,,275036.00,0.00,0.00,250962.00,56.00,0.02,1465432.00,744.00,0.05,RB 1215,,North Africa
+Swaziland,1978-79,530000,74010,,,3790.00,0.00,0.00,53334.00,0.00,0.00,16886.00,2.00,0.01,RB 1203,,Southern Africa
+Swaziland,1979,,14922,,,549.00,0.00,0.00,12562.00,36.00,0.29,1811.00,11.00,0.61,RB 1204,,Southern Africa
+Tanzania,1977-78,,,,,15199.00,0.00,0.00,206021.00,1242.00,0.60,97058.00,657.00,0.68,RB 1201,,East Africa
+Tibet,1979,,,,,1231.00,0.00,0.00,8715.00,0.00,0.00,5715.00,125.00,2.19,RB 1259,"age groups are 0-4, 5-19, >= 20",East Asia
+Togo,1969,,,,,323.00,8.00,2.48,265.00,2.00,0.75,574.00,76.00,,RB 890,"0-4 considering preschool, 5-14 school age, 15 and older considering adult",West Africa
+Togo,1975-76,,177221,,,0.00,,,177221.00,59.00,0.03,0.00,,,RB 1165,"preschool, primary school, over primary school age",West Africa
+UAE,1978,670000,,,,85994.00,4.00,0.00,,,,,,,RB 1220,,Western Asia
+Uganda,1978,,,,,90436.00,0.00,0.00,926041.00,58.00,0.01,601895.00,21.00,0.00,RB 1214,,East Africa
+West Africa (15 countries),,,6497250,8390,0.13,1631918.00,0.00,0.00,3696932.00,4222.00,0.11,1168400.00,4168.00,0.36,https://apps.who.int/iris/bitstream/handle/10665/261779/PMC2395660.pdf?sequence=1,"preschool, primary school, over primary school age; may overlap with other African pock mark surveys reported in this table, not clear",West Africa
+"Western and Central Africa (Benin, Niger, Nigeria, Togo)",1968-69,,,,,,,1.50,,,4.70,,,20.75,RB 874,"considering 0-4 as preschool, 5-14 as school-aged, and over 15 as adults; separate table on same page shows country breakdown without age",West Africa
+Yemen,1978-79,897488,,,,,0.00,,,1920.00,,,,,RB 1219,"population is of villages searched, 0-9, over 10 age groups",Western Asia
+Yemen (Democratic),1978-79,,,,,24555.00,0.00,0.00,41352.00,0.00,0.00,62915.00,258.00,0.41,RB 1220,"age groups are 0-4, 5-14, >= 15",Western Asia
+Zaire,1976-77,2600000,396440,,,48491.00,0.00,0.00,264738.00,1238.00,0.47,83211.00,144.00,0.17,RB 1169,,Central Africa
+Zambia,1977-78,,,,,29275.00,0.00,,364294.00,1261.00,0.35,65763.00,301.00,0.46,RB 1201,,East Africa
+Zimbabwe,1978,,,,,49401.00,0.00,0.00,39835.00,4.00,0.01,26872.00,70.00,0.26,RB 1208,"age groups are 0-6, 7-14, 14+",East Africa

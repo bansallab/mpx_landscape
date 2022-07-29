@@ -6,7 +6,14 @@ This repository provides the data and source code for the following study: Julia
 To rerun the analysis and reproduce the figures, start by opening `mpx_landscape.Rproj`. From here, run the `make_figures.R` script to reproduce the main figures in the text and many of the supplementary figures. Brief descriptions of the other scripts can be found below.
 
 ## Estimates (`estimates/`)
-Pre-run analyses and estimates that can be used by others without re-running the code.
+Pre-run analyses and estimates that can be used by others without re-running the code. All assume 80.7% cross-immunity between smallpox vaccination and monkeypox infection unless otherwise noted.
+* `world.csv` contains percentage susceptible estimates at the admin-1 level
+* `world-by-country.csv` contains percentage susceptible estimates at the country level 
+* `us.csv` contains percentage susceptible estimates at the PUMAs level in the U.S.
+* `us-by-state.csv` contains percentage susceptible estimates at the state level in the U.S.
+* `variola-major-sensitivity.csv` contains percentage susceptible estimates at the admin-1 level for _Variola major_ (assuming 91.1% vaccine effectiveness)
+* `variola-minor-sensitivity.csv` contains percentage susceptible estimates at the admin-1 level for _Variola minor_ (assuming 74.9% vaccine effectiveness)
+* `world-admin1-age-data.csv` contains a manipulation of the GPW data to show the expected 2020 population size in each 5-year age class for each admin-1 region
 
 ## Data (`data/`)
 Inputs for data analysis can be found in this folder, outputs from running the code will populate here.

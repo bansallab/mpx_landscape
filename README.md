@@ -18,14 +18,15 @@ Pre-run analyses and estimates that can be used by others without re-running the
 ## Data (`data/`)
 Inputs for data analysis can be found in this folder, outputs from running the code will populate here.
 * `bootstrap_estimates.csv`, equivalent to Table S1, contains upper and lower bounds of vaccination coverage and cessation estimates for uncertainty analysis
-* `extracted_pums_2019data_age_birthplace_weights_region.csv` is a large file containing PUMS 2019 data used in U.S. analyses
-* `gadm404-levels.gpkg` contains the GADM shape files data
 * `gpw_to_gadm_country_join.csv` and `one_gpw_to_multiple_gadm.csv` allow for correct joining of GPW and GADM data
-* `gpw-v4-admin-unit-center-points-population-estimates-rev11_global_csv 2/` contains GPW data
 * `natural_immunity.csv` contains case count data from the Red Book
 * `pock_survey_coverage.csv` contains pock mark survey data
 * `state_fips.csv` helps converting PUMAs level estimates in the U.S. to the state-level
 
+The files below are quite large and will be added in the future. To access immediately, you can download from the respective websites.
+* `extracted_pums_2019data_age_birthplace_weights_region.csv` from \url{https://www.census.gov/programs-surveys/acs/microdata/access/2019.html} contains PUMS 2019 data used in U.S. analyses
+* `gadm404-levels.gpkg` from \url{https://gadm.org/data.html} contains the GADM shape files data
+* `gpw-v4-admin-unit-center-points-population-estimates-rev11_global_csv 2/` from \url{https://sedac.ciesin.columbia.edu/data/set/gpw-v4-basic-demographic-characteristics-rev11} contains GPW data
 
 ## Code (`scripts/`)
 Scripts to prepare demography data, join mapping data, calculate the proportion of a population vaccinated, calculate world and national age distributions, and calculate the landscape of orthopoxvirus susceptibility can be found in this folder.

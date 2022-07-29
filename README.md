@@ -5,6 +5,8 @@ This repository provides the data and source code for the following study: Julia
 ## How to use this resource
 To rerun the analysis and reproduce the figures, start by opening `mpx_landscape.Rproj`. From here, run the `make_figures.R` script to reproduce the main figures in the text and many of the supplementary figures. Brief descriptions of the other scripts can be found below.
 
+We hope for this to be a living database, with updated historical and future data on vaccination, and invite the global health community to contribute. (We'll add details on how you can contribute soon. In the meantime, please reach out at shweta.bansal@georgetown.edu with any data you would like to share). 
+
 ## Estimates (`estimates/`)
 Pre-run analyses and estimates that can be used by others without re-running the code. All assume 80.7% cross-immunity between smallpox vaccination and monkeypox infection unless otherwise noted.
 * `world.csv` contains percentage susceptible estimates at the admin-1 level

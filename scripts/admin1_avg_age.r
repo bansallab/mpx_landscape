@@ -1,5 +1,7 @@
-source("scripts/main.r")
+### CALCULATES AND PLOTS AVERAGE ADMIN1 AGE
+### Juliana Taube
 
+source("scripts/load_files_for_run.r")
 
 data_long <- gpw %>% pivot_longer(cols = A00_04B:A85PLUSB, values_to = "popn", 
                                   names_to = "age") 
@@ -26,7 +28,9 @@ map_main(estimates = avg_age_all,
          do_plot_difference = FALSE,
          var_to_plot = "mean_age",
          legend_title = "Average age",
-         lower = NA, upper = NA, palette = "Tam")
+         lower = 9, upper = 56, palette = "Tam",
+         show_legend = TRUE, wide_legend = FALSE,
+         diff_comparison_path = NA)
 ggsave("figures/admin1-age-dist.png", height = 4, width = 8, dpi = 600)
 
 # global average age

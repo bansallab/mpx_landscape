@@ -1,6 +1,5 @@
-### PRODUCES MAIN TEXT AND SOME SUPPLEMENTARY FIGURES
+### LOADS PRECLEANED DATA, FUNCTIONS, CONSTANTS TO RUN ANALYSES AND MAKE FIGURES
 ### Juliana Taube
-### last run on 07/13/22
 
 library(tidyverse)
 #library(tidylog)
@@ -19,7 +18,7 @@ library(extraDistr)
 
 # RUN monkeypox_world_data_cleaning.r FIRST
 # RUN world_national_age_dists.r FIRST
-# it's contents get saved, don't need to clog environment
+# its contents get saved, don't need to clog environment
 
 ### source other scripts
 source("scripts/scar_survey_coverage_calcs.r")
@@ -37,23 +36,14 @@ PERC_MISSED_CASES <- 0.5 # 50%
 ### read in other datasets
 
 # vaccine cessation and scar survey data
-# stop_cvg_data <- read_csv("data/bootstrap_estimates.csv") %>% 
-#   rename(ISO = Country_ISO_Code, 
-#          POBP = Country_PUMS_Code, # this is a country code though
-#          vax_stopped = cessdate_orig,
-#          prop_vax_5to14 = cvg_514_orig,
-#          prop_vax_over14 = cvg_over15_orig,
-#          prop_vax_all_ages = cvg_tot_orig,
-#          Survey_Year = cvg_survey_yr) %>% 
-#   select(ISO, Country, POBP, vax_stopped, prop_vax_5to14, prop_vax_over14, prop_vax_all_ages, Survey_Year)
-cessation_coverage_data <- read_csv("data/bootstrap_estimates.csv") %>% 
+cessation_coverage_data <- read_csv("data/cessation_coverage_estimates.csv") %>% 
   rename(ISO = Country_ISO_Code, 
          POBP = Country_PUMS_Code, # this is a country code though
          vax_stopped = cessdate_orig,
          Survey_Year = cvg_survey_yr)
 
 # us vax coverage data
-polio_proxy_coverage <- read_csv("/Volumes/GoogleDrive/.shortcut-targets-by-id/11aXqVeupT5dAfUsZeO0_tJ-a7e3QepFY/Monkeypox/polio95_3dose_states.csv") %>% 
+polio_proxy_coverage <- read_csv("data/polio95_3dose_states.csv") %>% 
   select(FIPS, State, `24 mos. Cvg`) %>% 
   mutate(coverage = `24 mos. Cvg`/100) %>% 
   rename(fips_of_birth = FIPS,
@@ -79,7 +69,7 @@ new_national_weights <- read_csv("data/us_national_weights_age_dist.csv")
 new_world_weights <- read_csv("data/us_world_weights_age_dist.csv")
 
 # gadm shapefiles
-orig_gadm404 <- st_read("/Volumes/GoogleDrive/.shortcut-targets-by-id/1dyJGCiOfJYArdtZToZCszoFfIYyyr5sN/Juliana_Bansal_Lab/monkeypox/data/gadm404-levels.gpkg",
+orig_gadm404 <- st_read("data/gadm404-levels.gpkg",
                         layer = "level1")
 gadm404 <- orig_gadm404 %>% select(ID_0, COUNTRY, ID_1, NAME_1, geom) %>%
   mutate(COUNTRY = stri_trans_general(str = tolower(COUNTRY), id = "Latin-ASCII"),

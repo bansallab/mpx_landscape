@@ -1,8 +1,10 @@
-# functions processing the logic of scar survey data
-# includes two different approaches, one for non-us countries, and
-#   one for foreign-born individuals in the US
+### FUNCTIONS CALCULATING CHANCE THAT AN INDIVIDUAL/GROUP IS VACCINATED USING
+###   SCAR SURVEY DATA
+### includes three different approaches, one for non-us countries with 5-year age groups,
+###   one for foreign-born individuals in the US, one for homogeneous coverage counterfactual
+### Juliana Taube
 
-#DEFAULT_COVERAGE <- 0.8
+## default coverage constant will be initialized in load_files_for_run.r script
 
 ####  FOR WORLD OR 5 YEAR AGE GROUPINGS
 # determine proportion of age group eligible for vaccination
@@ -25,8 +27,6 @@ calc_vax_coverage <- function(min_date, max_date, survey_date, vax_end_date,
   }
   
   # if there is no survey date, need to use default 0.80 coverage
-  # I think this should get changed to all original values are NA because when we do bootstrapping
-  # there are a bunch where we don't have a survey date but we will have a specific coverage to use
   if(is.na(covg5to14) & is.na(covg15plus) & is.na(covgall)){
     return(prop_eligible * DEFAULT_COVERAGE)
   }else if(is.na(survey_date)){ # this is bootstrap case where survey date not available but overall covg is
@@ -58,7 +58,6 @@ calc_vax_coverage <- function(min_date, max_date, survey_date, vax_end_date,
     }
   }
 }
-
 
 
 ####  FOR US FOREIGN BORN NO AGE GROUPING

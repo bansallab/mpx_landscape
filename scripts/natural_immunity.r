@@ -1,3 +1,6 @@
+### PLOTS SMALLPOX CASE COUNTS AND POCK MARK DATA TO ASSESS IMPORTANCE OF NATURAL IMMUNITY
+### Juliana Taube
+
 library(tidyverse)
 library(tidylog)
 library(MetBrewer)
@@ -34,11 +37,11 @@ data_long %>% filter(! country %in% c("Iran", "Iraq")) %>%
   facet_wrap(~country, nrow = 4) +
   theme_bw() +
   scale_x_discrete(breaks = seq(from = 1965, to = 1980, by = 5)) +
-  labs(y = "Cumulative incidence (percentage of population)") +
+  labs(y = "Cumulative incidence (percentage of population)", x = "Year") +
   theme(legend.position = "none",
         panel.spacing = unit(1, "lines")) # +
   # scale_color_manual(values = met.brewer("Archambault", 19))
-ggsave("figures/cases-countries-endemic-1970-later.jpeg", height = 8, width = 12, dpi = 800)
+#ggsave("figures/cases-countries-endemic-1970-later.jpeg", height = 8, width = 12, dpi = 800)
 ggsave("figures/cases-countries-endemic-1970-later.pdf", height = 8, width = 12, dpi = 800)
 
 #  may use these cumulative percentages in these countries - 
@@ -50,6 +53,7 @@ out$ISOALPHA <- c("AFG", "BGD", "BWA", "BRA", "BDI", "COD", "ETH", "IND",
                   "SDN", "TZA", "ZWE")
 write_csv(out, "data/nat_immunity_cumulative_prop_infected.csv")
 
+### POCK MARK DATA ----------------------------------------------------------------
 pock <- read_csv("data/pock_survey_coverage.csv")
 # max percentages
 summary(pock)
@@ -87,24 +91,23 @@ pock_long %>% ggplot(aes(x = percentage, fill = UN_region)) +
 #ggsave("figures/pockmarks-all-countries.pdf", height = 6, width = 10, dpi = 600)
 ggsave("figures/pockmarks-all-countries.pdf", height = 6, width = 10, dpi = 600)
 
-
-pock_endemic <- data %>% left_join(pock, by = "Country") %>% 
-  select(Country, Year, `Last endemic spread`, `Total percentage`, `Preschool percentage`,
-         `School age percentage`, `Adult percentage`) %>% 
-  pivot_longer(cols = (`Total percentage`:`Adult percentage`), values_to = "percentage",
-               names_to = "age_group") %>% 
-  mutate(age_group = gsub("[ ]percentage", "", age_group))
-
-pock_endemic$age_group <- factor(pock_endemic$age_group, 
-                                 levels = c("Preschool", "School age", "Adult", "Total"))
-
-pock_endemic %>% ggplot(aes(x = percentage, fill = Country)) +
-  geom_histogram(aes(y = stat(count)/sum(count)), col = "white") +
-  facet_wrap(~age_group, scales = "free") +
-  #scale_x_log10(breaks = c(0.001, 0.01, 0.1, 1, 10), labels = c(0.001, 0.01, 0.1, 1, 10)) +
-  ylab("frequency") +
-  theme(legend.position = "none")
-ggsave("figures/pockmarks-endemic.jpeg", height = 6, width = 10, dpi = 600)
-ggsave("figures/pockmarks-endemic-zeros.jpeg", height = 6, width = 5, dpi = 600)
+# pock_endemic <- data %>% left_join(pock, by = "Country") %>% 
+#   select(Country, Year, `Last endemic spread`, `Total percentage`, `Preschool percentage`,
+#          `School age percentage`, `Adult percentage`) %>% 
+#   pivot_longer(cols = (`Total percentage`:`Adult percentage`), values_to = "percentage",
+#                names_to = "age_group") %>% 
+#   mutate(age_group = gsub("[ ]percentage", "", age_group))
+# 
+# pock_endemic$age_group <- factor(pock_endemic$age_group, 
+#                                  levels = c("Preschool", "School age", "Adult", "Total"))
+# 
+# pock_endemic %>% ggplot(aes(x = percentage, fill = Country)) +
+#   geom_histogram(aes(y = stat(count)/sum(count)), col = "white") +
+#   facet_wrap(~age_group, scales = "free") +
+#   #scale_x_log10(breaks = c(0.001, 0.01, 0.1, 1, 10), labels = c(0.001, 0.01, 0.1, 1, 10)) +
+#   ylab("frequency") +
+#   theme(legend.position = "none")
+# ggsave("figures/pockmarks-endemic.jpeg", height = 6, width = 10, dpi = 600)
+# ggsave("figures/pockmarks-endemic-zeros.jpeg", height = 6, width = 5, dpi = 600)
 
 

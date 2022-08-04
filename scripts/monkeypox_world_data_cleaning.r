@@ -1,3 +1,6 @@
+### CLEANS AND FORMATS GPW AND GADM DATA FOR ANALYSIS AND MAPPING
+### Juliana Taube
+
 library(tidyverse)
 library(tidylog)
 library(rnaturalearth)
@@ -9,8 +12,7 @@ library(MetBrewer)
 # skip to read in data_agg
 # data <- read_csv("data/gpw-v4-admin-unit-center-points-population-estimates-rev11_global_csv 2/gpw_v4_admin_unit_center_points_population_estimates_rev11_global.csv")
 
-# do we need centroid info? need to see what file we are merging this with
-# need to summarise to admin1 level
+# need to summarise to admin1 level, this may take a while
 # data_agg <- data %>% group_by(ISOALPHA, COUNTRYNM, NAME1) %>% 
 #   summarise(tot_popn_2020 = sum(UN_2020_E),
 #             tot_popn_2010 = sum(UN_2010_E),

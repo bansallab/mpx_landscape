@@ -1,10 +1,15 @@
+### CALCULATES AVERAGE GLOBAL AND NATIONAL AGE DISTRIBUTIONS FOR HOMOGENEOUS COUNTERFACTUALS
+### ALSO CALCULATES NEW WEIGHTS FOR US HOMOGENEOUS AGE COUNTERFACTUALS SINCE ORIGINAL PUMS WEIGHTS 
+###   NO LONGER APPLY WHEN GROUPED INTO 5 YEAR AGE GROUPS
+### Juliana Taube
+
 library(tidyverse)
 library(tidylog)
 
 # read in age data
 gpw <- read_csv("data/cleaned_gpw_age_data.csv")
-pums_data <- read_csv("data/extracted_pums_2019data_age_birthplace_weights.csv") %>% 
-  mutate(birth_year = 2022 - AGEP) %>% select(-`...1`)
+pums_data <- read_csv("data/extracted_pums_2019data_age_birthplace_weights_region.csv") %>% 
+  mutate(birth_year = 2022 - AGEP)
 
 ### WORLD AGE DISTRIBUTION ###
 world_age_dist_wo_us <- gpw %>% summarise(tot_popn_2020 = sum(tot_popn_2020), 
@@ -30,7 +35,7 @@ world_age_dist_wo_us <- gpw %>% summarise(tot_popn_2020 = sum(tot_popn_2020),
 
 tot_world_popn <- world_age_dist_wo_us$age_dist[[1]]
 
-# need to include US before calculating prop
+# need to include US before calculating prop in each age group
 us_age_recat <- pums_data %>%
   mutate(age_5 = case_when(AGEP < 5 ~ "A00_04B",
                            AGEP < 10 ~ "A05_09B",
@@ -96,10 +101,12 @@ national_age_dist <- gpw %>% group_by(ISOALPHA, COUNTRYNM) %>%
 write_csv(national_age_dist, "data/national_age_dist.csv")
 
 ### US world and national age weights
+# lose place of birth information since have to aggregate across all individuals of same age
 county_totals <- pums_data %>% group_by(PUMA, ST) %>% 
   summarise(county_popn = sum(PWGTP))
 
 # need to group us data into 5 year groups to use national and world age distributions
+#   for homogeneous counterfactual, see below for motivation
 # prop in each age group across whole us
 us_age_dist_props <- us_age_recat %>% 
   group_by(age_5) %>% 

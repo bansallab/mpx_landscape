@@ -1,3 +1,6 @@
+### CALCULATES ESTIMATES, MAKES MAIN FIGURES FOR MANUSCRIPT, AND SOME SUPPLEMENTARY FIGURES
+### Juliana Taube
+
 source("scripts/load_files_for_run.r")
 
 ### CALLING FUNCTIONS TO MAKE FIGURES ### -------------------------------------
@@ -29,7 +32,7 @@ state_values <- main_estimates %>% filter(COUNTRYNM == "united states") %>%
 # write_csv(state_values, "data/estimates/us-by-state.csv")
 
 ### scatters
-boot_notes <- read_csv("data/bootstrap_estimates.csv") %>% 
+boot_notes <- read_csv("data/data/cessation_coverage_estimates.csv") %>% 
   mutate(is_default_cvg = ifelse(is.na(`Vax Coverage Methods/Notes`), 0,
                                  ifelse(`Vax Coverage Methods/Notes` == "Default WHO target coverage (80%)",
                                         1, 0)),
@@ -253,7 +256,7 @@ dev.off()
 
 ### country bar plot
 bar_data <- national_values %>% 
-  left_join(read_csv("data/bootstrap_estimates.csv") %>% select(Country_ISO_Code, Region),
+  left_join(read_csv("data/cessation_coverage_estimates.csv") %>% select(Country_ISO_Code, Region),
             by = c("ISOALPHA" = "Country_ISO_Code")) %>% 
   mutate(Region = as.factor(ifelse(COUNTRYNM == "united states", "AM", Region))) %>% 
   distinct()
@@ -509,11 +512,12 @@ variola_major <- main_function(other_age_data = NA,
                                is_100_covg = FALSE, is_1984_end = FALSE, 
                                waning = 0.911, include_natural_immunity = FALSE, 
                                is_bootstrap = FALSE)
+write_csv(variola_major %>% select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible), 
+          "data/estimates/variola-major-sensitivity.csv")
 major_diff <- variola_major %>% rename(perc_susceptible_maj = perc_susceptible) %>% 
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_maj) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_maj - perc_susceptible)
-write_csv(major_diff, "data/estimates/variola-major-sensitivity.csv")
 variola_major_fig <- map_main(variola_major,
                               do_plot_difference = FALSE, 
                               var_to_plot = "perc_susceptible",
@@ -527,11 +531,12 @@ variola_minor <- main_function(other_age_data = NA,
                                is_100_covg = FALSE, is_1984_end = FALSE, 
                                waning = 0.749, include_natural_immunity = FALSE, 
                                is_bootstrap = FALSE)
+write_csv(variola_minor %>% select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible), 
+          "data/estimates/variola-minor-sensitivity.csv")
 minor_diff <- variola_minor %>% rename(perc_susceptible_min = perc_susceptible) %>% 
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_min) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_min - perc_susceptible)
-write_csv(minor_diff, "data/estimates/variola-minor-sensitivity.csv")
 variola_minor_fig <- map_main(variola_minor,
                               do_plot_difference = FALSE, 
                               var_to_plot = "perc_susceptible",
@@ -597,45 +602,45 @@ immigrant_vs_not_vax <- pums_data %>% left_join(cessation_coverage_data, by = ("
 
 
 ### playing with contours
-library(akima)
-# need to make a grid, see: https://stackoverflow.com/questions/65873211/empty-contour-plot-in-ggplot
-scatter_data_grid <- scatter_data %>% # remove default 80% coverages
-  filter(is_default_cvg == 0)
-# had an issue where had duplicate (x,y) coordinates leading to same/different z (UK repeated)
-grid <- akima::interp(scatter_data_grid$perc_born_before_1980_country, 
-                      scatter_data_grid$overall_cvg_country,
-                      scatter_data_grid$perc_susceptible)
-griddf <- data.frame(x = rep(grid$x, ncol(grid$z)), 
-                     y = rep(grid$y, each = nrow(grid$z)), 
-                     z = as.numeric(grid$z))
-c1 <- ggplot(data = griddf,
-             aes(x = x,
-                 y = y,
-                 z = z)) + 
-  geom_contour_filled(alpha = 0.8) + 
-  scale_fill_viridis_d(drop = FALSE) +
-  labs(x = "Percentage born before 1980", y = "Overall scar survey coverage",
-       fill = "Percent susceptible") +
-  theme(legend.position = "bottom")
-
-# may want to add points: https://stackoverflow.com/questions/43268692/how-to-put-the-actual-data-points-on-the-contour-plot-with-ggplot
-library(metR)
-# from: https://eliocamp.github.io/codigo-r/en/2021/09/contour-labels/
-c2 <- ggplot(data = griddf,
-             aes(x = x,
-                 y = y,
-                 z = z)) + 
-  geom_contour() +
-  metR::geom_text_contour() + 
-  geom_point(data = scatter_data_grid, aes(x = perc_born_before_1980_country,
-                                           y = overall_cvg_country,
-                                           z = perc_susceptible,
-                                           colour = Region)) +
-  labs(x = "Percentage born before 1980", y = "Overall scar survey coverage",
-       fill = "Percent susceptible") +
-  theme(legend.position = "bottom")
-#scale_color_discrete(colors=met.brewer("Tam")) #gradientn
-
-ggarrange(c2, c1, ncol = 2, labels = "AUTO")
-ggsave("figures/contours.pdf", height = 5, width = 12)
-
+# library(akima)
+# # need to make a grid, see: https://stackoverflow.com/questions/65873211/empty-contour-plot-in-ggplot
+# scatter_data_grid <- scatter_data %>% # remove default 80% coverages
+#   filter(is_default_cvg == 0)
+# # had an issue where had duplicate (x,y) coordinates leading to same/different z (UK repeated)
+# grid <- akima::interp(scatter_data_grid$perc_born_before_1980_country, 
+#                       scatter_data_grid$overall_cvg_country,
+#                       scatter_data_grid$perc_susceptible)
+# griddf <- data.frame(x = rep(grid$x, ncol(grid$z)), 
+#                      y = rep(grid$y, each = nrow(grid$z)), 
+#                      z = as.numeric(grid$z))
+# c1 <- ggplot(data = griddf,
+#              aes(x = x,
+#                  y = y,
+#                  z = z)) + 
+#   geom_contour_filled(alpha = 0.8) + 
+#   scale_fill_viridis_d(drop = FALSE) +
+#   labs(x = "Percentage born before 1980", y = "Overall scar survey coverage",
+#        fill = "Percent susceptible") +
+#   theme(legend.position = "bottom")
+# 
+# # may want to add points: https://stackoverflow.com/questions/43268692/how-to-put-the-actual-data-points-on-the-contour-plot-with-ggplot
+# library(metR)
+# # from: https://eliocamp.github.io/codigo-r/en/2021/09/contour-labels/
+# c2 <- ggplot(data = griddf,
+#              aes(x = x,
+#                  y = y,
+#                  z = z)) + 
+#   geom_contour() +
+#   metR::geom_text_contour() + 
+#   geom_point(data = scatter_data_grid, aes(x = perc_born_before_1980_country,
+#                                            y = overall_cvg_country,
+#                                            z = perc_susceptible,
+#                                            colour = Region)) +
+#   labs(x = "Percentage born before 1980", y = "Overall scar survey coverage",
+#        fill = "Percent susceptible") +
+#   theme(legend.position = "bottom")
+# #scale_color_discrete(colors=met.brewer("Tam")) #gradientn
+# 
+# ggarrange(c2, c1, ncol = 2, labels = "AUTO")
+# ggsave("figures/contours.pdf", height = 5, width = 12)
+# 

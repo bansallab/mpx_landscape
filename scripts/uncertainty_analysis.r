@@ -1,3 +1,7 @@
+### RUNS UNCERTAINTY ANALYSIS AT ADMIN1 LEVEL AGGREGATED ACROSS ALL AGE GROUPS
+###   USING UPPER AND LOWER BOUNDS FOR CESSATION AND COVERAGE ESTIMATES
+### Juliana Taube
+
 source("scripts/load_files_for_run.r")
 
 # can use runif(num_samples, min_value, max_value) for real numbers
@@ -92,7 +96,7 @@ for(i in 1:ITERATIONS){
 }
 
 write_csv(estimates_log, "data/bootstrapped_estimates_5000.csv")
-estimates_log <- read_csv("data/bootstrapped_estimates_5000.csv") # be careful bc input is bootstrap_estimates
+estimates_log <- read_csv("data/bootstrapped_estimates_5000.csv")
 
 test <- estimates_log %>% 
   pivot_longer(cols = perc_susceptible1:perc_susceptible5000,

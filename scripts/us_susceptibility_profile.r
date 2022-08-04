@@ -1,56 +1,26 @@
-setwd("/Volumes/GoogleDrive/.shortcut-targets-by-id/1dyJGCiOfJYArdtZToZCszoFfIYyyr5sN/Juliana_Bansal_Lab/monkeypox/")
+### CALCULATES SUSCEPTIBILITY PROFILE FOR THE US, uses place of birth to determine chance vaccinated
+###   then aggregates to state level using weighted mean to get prop susceptible
+### Juliana Taube
 
-library(readr)
-library(tidyr)
-library(tidyverse)
-library(tidylog)
-library(dplyr)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(sf)
-library(ggplot2)
-library(stringi)
-library(MetBrewer)
-WANING <- 0.85
-DEFAULT_COVERAGE <- 0.8
-source("scripts/scar_survey_coverage_calcs.r")
-
-pums_data <- read_csv("data/extracted_pums_2019data_age_birthplace_weights.csv") %>% 
-  mutate(birth_year = 2022 - AGEP) %>% select(-`...1`)
-
-country_dates <- read_csv("data/vaccination_discontinuation.csv") %>% 
-  rename(POBP = Country_PUMS_Code,
-         vax_stopped = Vaccine_discontinued_estimated) %>% 
-  select(Country_ISO_Code, Country, POBP, vax_stopped)
-# coverage data
-scar_survey_coverage <- read_csv("data/scar_survey_coverage.csv")
-polio_proxy_coverage <- read_csv("/Volumes/GoogleDrive/.shortcut-targets-by-id/11aXqVeupT5dAfUsZeO0_tJ-a7e3QepFY/Monkeypox/polio95_3dose_states.csv") %>% 
-  select(FIPS, State, `24 mos. Cvg`) %>% 
-  mutate(coverage = `24 mos. Cvg`/100) %>% 
-  rename(fips_of_birth = FIPS,
-         state_of_birth = State) %>% 
-  mutate(coverage = (coverage / mean(coverage, na.rm = T)) * 0.9) # factor in spx national avg
+source("scripts/load_files_for_run.r")
 
 # create is_vaxxed binary
-df <- pums_data %>% left_join(country_dates, by = "POBP") %>% 
+df <- pums_data %>% left_join(cessation_coverage_data, by = "POBP") %>% 
   left_join(polio_proxy_coverage, by = c("POBP" = "fips_of_birth")) %>%
-  left_join(scar_survey_coverage, by = c("POBP" = "Country_PUMS_Code", "Country")) %>% #  my way
   rowwise() %>% 
   mutate(vax_stopped = ifelse(POBP < 100, 1972, vax_stopped), # set all US to 1972
          Country = ifelse(POBP < 60, "USA", Country),
          chance_vaxxed = ifelse(POBP >= 100, 
                                 calc_vax_coverage_foreign(birth_year, Survey_Year,
-                                                          vax_stopped, prop_vax_5to14,
-                                                          prop_vax_over14, prop_vax_all_ages),
+                                                          vax_stopped, cvg_514_orig,
+                                                          cvg_over14_orig, cvg_tot_orig),
                                 ifelse(birth_year <= vax_stopped, spx_coverage, 0)))
-                                       # ifelse(!is.na(coverage), coverage, DEFAULT_COVERAGE),
-                                       # 0))) # including US territories rn
-
+                                     
 df2 <- df %>% select(PUMA, ST, AGEP, POBP, PWGTP, birth_year, chance_vaxxed) %>% 
   filter(birth_year <= 2003) %>% 
   mutate(age_in_2003 = 2003 - birth_year)
 
-# shweta doesn't care where they were born, just where they live now
+# we don't care where they were born, just where they live now
 # but I used where they were born to calculate their chance vaxxed
 # df3 <- df2 %>% select(-POBP, -PUMA) %>% 
 #   distinct()

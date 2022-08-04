@@ -1,3 +1,8 @@
+### CALCULATES SUSCEPTIBILITY PROFILE AT COUNTRY LEVEL GLOBALLY, EXCLUDING US
+### PROFILES FOR SPECIFIC COUNTRIES IN SPECIFIC YEARS USED IN VALIDATION ANALYSIS
+### Juliana Taube
+
+
 library(tidyverse)
 library(tidylog)
 library(stringi)
@@ -9,9 +14,7 @@ source("scripts/scar_survey_coverage_calcs.r")
 
 gpw <- read_csv("data/cleaned_gpw_age_data.csv")
 
-                          #col_types = "cccciiicdddddddddicccccccc") %>% 
-
-cessation_coverage_data_prof <- read_csv("data/bootstrap_estimates.csv") %>% 
+cessation_coverage_data_prof <- read_csv("data/cessation_coverage_estimates.csv") %>% 
   rename(ISO = Country_ISO_Code, 
          POBP = Country_PUMS_Code, # this is a country code though
          vax_stopped = cessdate_orig,
@@ -45,7 +48,7 @@ levels(df$age) <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29",
                     "30-34", "35-39", "40-44", "45-49", "50-54", 
                     "55-59", "60-64", "65-69", "70-74", "75-79",
                     "80-84", "85+")
-# REDO THESE LEVELS CAUSE EVA CHANGED DOCUMENT
+# REDO THESE LEVELS IF CESS_CVG DOCUMENT CHANGES
 levels(df$Region)
 levels(df$Region) <- c("Americas", "Africa", "Europe", "Former Soviet Republic",
                        "Southeast and East Asia", "Middle East", "Caribbean", 
@@ -118,22 +121,22 @@ write_csv(bra, "data/susc_profile_bra_2012.csv")
 
 
 ### old way
-susc_profile <- vaxxed_by_age %>% mutate(prop_susc = 1 - (prop_vaxxed_by_age * WANING)) %>% 
-  filter(!is.na(prop_susc)) %>% 
-  select(ISOALPHA:popn, prop_vaxxed_by_age:prop_susc) %>% 
-  group_by(COUNTRYNM, age) %>% 
-  summarise(prop_susceptible = weighted.mean(prop_susc, popn, na.rm = T)) %>% 
-  mutate(age = as.factor(age))
-levels(susc_profile$age) <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29",
-                              "30-34", "35-39", "40-44", "45-49", "50-54", 
-                              "55-59", "60-64", "65-69", "70-74", "75-79",
-                              "80-84", "85+")
-
-pdf("figures/sus-profile-all.pdf", height = 20, width = 20)
-susc_profile %>% ggplot(aes(x = age, y = prop_susceptible, group = COUNTRYNM,
-                            col = COUNTRYNM)) +
-  geom_point() +
-  geom_line() +
-  theme(legend.position = "bottom")
-facet_wrap(~COUNTRYNM)
-dev.off()
+# susc_profile <- vaxxed_by_age %>% mutate(prop_susc = 1 - (prop_vaxxed_by_age * WANING)) %>% 
+#   filter(!is.na(prop_susc)) %>% 
+#   select(ISOALPHA:popn, prop_vaxxed_by_age:prop_susc) %>% 
+#   group_by(COUNTRYNM, age) %>% 
+#   summarise(prop_susceptible = weighted.mean(prop_susc, popn, na.rm = T)) %>% 
+#   mutate(age = as.factor(age))
+# levels(susc_profile$age) <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29",
+#                               "30-34", "35-39", "40-44", "45-49", "50-54", 
+#                               "55-59", "60-64", "65-69", "70-74", "75-79",
+#                               "80-84", "85+")
+# 
+# pdf("figures/sus-profile-all.pdf", height = 20, width = 20)
+# susc_profile %>% ggplot(aes(x = age, y = prop_susceptible, group = COUNTRYNM,
+#                             col = COUNTRYNM)) +
+#   geom_point() +
+#   geom_line() +
+#   theme(legend.position = "bottom")
+# facet_wrap(~COUNTRYNM)
+# dev.off()

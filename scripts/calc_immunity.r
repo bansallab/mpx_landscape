@@ -1,6 +1,7 @@
 ### FUNCTION TO CALCULATE PERCENTAGE OF ADMIN1 LEVEL POPULATION PROTECTED GLOBALLY
+###   MAIN ESTIMATES AND COUNTERFACTUALS
 ### Juliana Taube
-### last updated 07/21/22
+
 
 main_function <- function(other_age_data, is_diff_age_dist, 
                           is_world_age_dist, is_100_covg, is_1984_end, 
@@ -136,7 +137,7 @@ main_function <- function(other_age_data, is_diff_age_dist,
   }
   
   return(vaxxed_by_admin)
-  # onyl going to have pop_size column if not a counterfactual
+  # only going to have pop_size column if not a counterfactual
   
 }
 

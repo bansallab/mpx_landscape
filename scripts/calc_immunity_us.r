@@ -1,6 +1,7 @@
-### FUNCTION TO CALCULATE PERCENTAGE OF PUMAS LEVEL POPULATION PROTECTED IN US
+### FUNCTION TO CALCULATE PERCENTAGE OF PUMAS LEVEL POPULATION PROTECTED IN US FOR
+###   MAIN ESTIMATES AND COUNTERFACTUALS
+### AGGREGATES TO ADMIN1 (STATE) LEVEL IF USING IN WORLD MAP
 ### Juliana Taube
-### last updated 07/21/22
 
 main_us_function <- function(data_to_use, is_diff_age_dist, 
                           for_world_map, is_100_covg, is_1984_end, 
@@ -48,7 +49,7 @@ main_us_function <- function(data_to_use, is_diff_age_dist,
     # can still use vax eligible function
     # but other calc_vax_coverage may not work
     # IN THIS CASE REMEMBER CAN'T TAKE INTO ACCOUNT IMMIGRATION/PLACE OF BIRTH
-    # main place new weights come into play is in taking wieghted mean to get prop vaxxed
+    # main place new weights come into play is in taking weighted mean to get prop vaxxed
     # but we need to treat diff age dists differently here because this is grouped
     # also whether national or age, still using groups, still same end date
   

@@ -21,8 +21,9 @@ Pre-run analyses and estimates that can be used by others without re-running the
 * `variola-minor-sensitivity.csv` contains percentage susceptible estimates at the admin-1 level for _Variola minor_ (assuming 74.9% vaccine effectiveness)
 
 ## Data (`data/`)
-Inputs for data analysis can be found in this folder, outputs from running the code will populate here.
-* `bootstrap_estimates.csv`, equivalent to Table S1, contains upper and lower bounds of vaccination coverage and cessation estimates for uncertainty analysis
+Inputs for data analysis can be found in this folder, outputs from running the code will populate here. Intermediate data inputs called in the code are not provided, but can be reproduced by running commented out code.
+* `cessation_coverage_estimates.csv`, equivalent to Table S1, contains upper and lower bounds of vaccination coverage and cessation estimates for uncertainty analysis
+* `polio95_3dose_states.csv` contains coverage estimates for 3 dose polio vaccination in the U.S. at the state level, used to add spatial heterogeneity to national smallpox vaccination coverage in U.S.
 * `gpw_to_gadm_country_join.csv` and `one_gpw_to_multiple_gadm.csv` allow for correct joining of GPW and GADM data
 * `natural_immunity.csv` contains case count data from the Red Book
 * `pock_survey_coverage.csv` contains pock mark survey data
@@ -38,7 +39,7 @@ Scripts to prepare demography data, join mapping data, calculate the proportion 
 * `make_figures.r` runs the analysis and creates figures in the main text and some supplementary figures
   * `load_files_for_run.r`, `calc_immunity.r`, `calc_immunity_us.r`, `draw_maps.r`, and `scar_survey_coverage_calcs.r` are all called within this main script
 * `admin1_avg_age.r` calculates and maps the average age of each admin1 region
-* `bootstrapping.r` runs the parametric bootstrapping uncertainty analysis (note this code takes longer to run)
+* `uncertainty_analysis.r` runs the parametric bootstrapping uncertainty analysis (note this code takes longer to run)
 * `global_susceptibility_profile.r` calculates and plots susceptibility profiles for each country
 * `monkeypox_world_data_cleaning.r` output is used to make figures, this cleans and prepares for joining the demographic and shapefiles
 * `natural_immunity.r` analyzes and plots natural immunity and pock mark survey data

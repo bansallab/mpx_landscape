@@ -9,8 +9,8 @@ source("scripts/load_files_for_run.r")
 #                                 is_world_age_dist = FALSE, is_100_covg = FALSE,
 #                                 is_1984_end = FALSE, waning = 0.807,
 #                                 include_natural_immunity = FALSE, is_bootstrap = FALSE)
-# write_csv(main_estimates, "data/estimates/world.csv")
-main_estimates <- read_csv("data/estimates/world.csv")
+# write_csv(main_estimates, "estimates/world.csv")
+main_estimates <- read_csv("estimates/world.csv")
 
 # could use this for bar chart now
 national_values <- main_estimates %>% group_by(ISOALPHA, COUNTRYNM) %>% 
@@ -24,12 +24,12 @@ national_values <- main_estimates %>% group_by(ISOALPHA, COUNTRYNM) %>%
             std_admin1_susc = sd(perc_susceptible)) %>% 
   mutate(across(c(mean_susceptibility, overall_cvg, perc_born_before_cessation),
                 ~ ifelse(is.nan(.x), NA_real_, .x))) # replace NaN with NA
-# write_csv(national_values, "data/estimates/world-by-country.csv")
+# write_csv(national_values, "estimates/world-by-country.csv")
 # post-hoc fix to include regions without rerunning right now
 state_values <- main_estimates %>% filter(COUNTRYNM == "united states") %>% 
   left_join((state_fips %>% select(state, fips)), by = c("NAME1" = "state")) %>% 
   left_join((pums_data %>% select(ST, REGION) %>% distinct()), by = c("fips" = "ST"))
-# write_csv(state_values, "data/estimates/us-by-state.csv")
+# write_csv(state_values, "estimates/us-by-state.csv")
 
 ### scatters
 boot_notes <- read_csv("data/data/cessation_coverage_estimates.csv") %>% 
@@ -234,8 +234,8 @@ p5 <- state_values %>%
 #                                  is_1984_end = FALSE, waning = 0.807,
 #                                  no_immigration = FALSE,
 #                                  cess_cvg_data = cessation_coverage_data)
-# write_csv(us_estimates, "data/estimates/us.csv")
-us_estimates <- read_csv("data/estimates/us.csv")
+# write_csv(us_estimates, "estimates/us.csv")
+us_estimates <- read_csv("estimates/us.csv")
 
 fig2_map <- map_us(us_estimates,
                    do_plot_difference = FALSE,
@@ -314,7 +314,7 @@ ggsave("figures/grouped-barplot-twocol.pdf", height = 16, width = 16)
 
 ### COUNTERFACTUAL PLOTS
 # us no immigration
-us_estimates <- read_csv("data/estimates/us.csv")
+us_estimates <- read_csv("estimates/us.csv")
 no_immigration <- main_us_function(data_to_use = pums_data, is_diff_age_dist = FALSE,
                                    for_world_map = FALSE, is_100_covg = FALSE,
                                    is_1984_end = FALSE, waning = 0.807, 
@@ -324,7 +324,7 @@ no_im_diff <- no_immigration %>% rename(perc_susceptible_no_im = perc_susceptibl
                                     pop_size_no_im = pop_size) %>% 
   left_join(us_estimates, by = c("PUMA", "ST")) %>% 
   mutate(difference = perc_susceptible_no_im - perc_susceptible)
-write_csv(no_im_diff, "data/estimates/no-immigration-counterfactual.csv")
+write_csv(no_im_diff, "estimates/no-immigration-counterfactual.csv")
 fig3d <- map_us(no_im_diff, do_plot_difference = TRUE, var_to_plot = "difference",
                 legend_title = "Difference in population susceptibility (% of popn)",
                 palette = "Hiroshige", lower = -35, upper = 35,
@@ -344,14 +344,14 @@ cess_1984_diff <- cess_1984 %>% rename(perc_susceptible_1984 = perc_susceptible)
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_1984) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_1984 - perc_susceptible)
-write_csv(cess_1984_diff, "data/estimates/cessation-1984-counterfactual.csv")
+write_csv(cess_1984_diff, "estimates/cessation-1984-counterfactual.csv")
 fig3a <- map_main(cess_1984,
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
                   legend_title = "Difference in population susceptibility (% of popn)", 
                   lower = -35, upper = 35, palette = "Hiroshige",
                   show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = "data/estimates/world.csv")
+                  diff_comparison_path = "estimates/world.csv")
 
 # 100% scar coverage
 covg_100 <- main_function(other_age_data = NA, is_diff_age_dist = FALSE, 
@@ -363,14 +363,14 @@ covg_100_diff <- covg_100 %>% rename(perc_susceptible_100 = perc_susceptible) %>
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_100) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_100 - perc_susceptible)
-write_csv(covg_100_diff, "data/estimates/coverage-100-counterfactual.csv")
+write_csv(covg_100_diff, "estimates/coverage-100-counterfactual.csv")
 fig3b <- map_main(covg_100,
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
                   legend_title = "Difference in population susceptibility (% of popn)", 
                   lower = -35, upper = 35, palette = "Hiroshige",
                   show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = "data/estimates/world.csv")
+                  diff_comparison_path = "estimates/world.csv")
 
 # world age distribution 
 world_same <- main_function(other_age_data = world_age_dist, 
@@ -383,14 +383,14 @@ world_same_diff <- world_same %>% rename(perc_susceptible_world = perc_susceptib
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_world) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_world - perc_susceptible)
-write_csv(world_same_diff, "data/estimates/world-age-dist-counterfactual.csv")
+write_csv(world_same_diff, "estimates/world-age-dist-counterfactual.csv")
 fig3c <- map_main(world_same,
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
                   legend_title = "Difference in population susceptibility (% of popn)", 
                   lower = -35, upper = 35, palette = "Hiroshige",
                   show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = "data/estimates/world.csv")
+                  diff_comparison_path = "estimates/world.csv")
 
 ggarrange(fig3a, fig3b, fig3c, fig3d, ncol = 2, nrow = 2, labels = "AUTO",
           common.legend = TRUE, legend = "bottom",
@@ -414,14 +414,14 @@ national_same_diff <- national_same %>% rename(perc_susceptible_national = perc_
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_national) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_national - perc_susceptible)
-write_csv(national_same_diff, "data/estimates/national-age-dist-counterfactual.csv")
+write_csv(national_same_diff, "estimates/national-age-dist-counterfactual.csv")
 figs1 <- map_main(national_same,
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
                   legend_title = "Difference in\npopulation\nsusceptibility\n(% of popn)", 
                   lower = -35, upper = 35, palette = "Hiroshige",
                   show_legend = TRUE, wide_legend = FALSE,
-                  diff_comparison_path = "data/estimates/world.csv")
+                  diff_comparison_path = "estimates/world.csv")
 
 figs1
 ggsave("figures/national-age-distribution.pdf", height = 4, width = 8, dpi = 600)
@@ -439,14 +439,14 @@ natural_immunity_diff <- nat_imm %>% rename(perc_susceptible_natimm = perc_susce
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_natimm) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_natimm - perc_susceptible)
-write_csv(natural_immunity_diff, "data/estimates/natural-immunity-sensitivity.csv")
+write_csv(natural_immunity_diff, "estimates/natural-immunity-sensitivity.csv")
 figs2 <- map_main(nat_imm,
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
                   legend_title = "Difference in\npopulation\nsusceptibility\n(% of popn)", 
                   lower = -35, upper = 35, palette = "Hiroshige",
                   show_legend = TRUE, wide_legend = FALSE,
-                  diff_comparison_path = "data/estimates/world.csv")
+                  diff_comparison_path = "estimates/world.csv")
 
 figs2zoom <- map_main(nat_imm,
                       do_plot_difference = TRUE, 
@@ -454,7 +454,7 @@ figs2zoom <- map_main(nat_imm,
                       legend_title = "Difference in\npopulation\nsusceptibility\n(% of popn)", 
                       lower = NA, upper = NA, palette = "Hiroshige",
                       show_legend = TRUE, wide_legend = FALSE,
-                      diff_comparison_path = "data/estimates/world.csv")
+                      diff_comparison_path = "estimates/world.csv")
 
 ggarrange(figs2, figs2zoom, ncol = 1, labels = "AUTO", font.label = list(size = 30))
 ggsave("figures/nat_immunity.pdf", height = 6, width = 8, dpi = 600)
@@ -473,14 +473,14 @@ effectiveness_diff <- effectiveness %>% rename(perc_susceptible_eff = perc_susce
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_eff) %>% 
   left_join(main_estimates, by = c("ISOALPHA", "COUNTRYNM", "NAME1")) %>% 
   mutate(diff = perc_susceptible_eff - perc_susceptible)
-write_csv(effectiveness_diff, "data/estimates/effective-75.6-sensitivity.csv")
+write_csv(effectiveness_diff, "estimates/effective-75.6-sensitivity.csv")
 effectiveness_fig <- map_main(effectiveness,
                               do_plot_difference = TRUE, 
                               var_to_plot = "difference",
                               legend_title = "Difference in population susceptibility (% of popn)", 
                               lower = -35, upper = 35, palette = "Hiroshige",
                               show_legend = TRUE, wide_legend = TRUE,
-                              diff_comparison_path = "data/estimates/world.csv")
+                              diff_comparison_path = "estimates/world.csv")
 
 no_waning <- main_function(other_age_data = NA,
                            is_diff_age_dist = FALSE, is_world_age_dist = FALSE,
@@ -491,14 +491,14 @@ no_diff <- no_waning %>% rename(perc_susceptible_no = perc_susceptible) %>%
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_no) %>% 
   left_join(main_estimates) %>% 
   mutate(diff = perc_susceptible_no - perc_susceptible)
-write_csv(no_diff, "data/estimates/effective-85-sensitivity.csv")
+write_csv(no_diff, "estimates/effective-85-sensitivity.csv")
 no_waning_fig <- map_main(no_waning,
                           do_plot_difference = TRUE, 
                           var_to_plot = "difference",
                           legend_title = "Difference in population susceptibility (% of popn)", 
                           lower = -35, upper = 35, palette = "Hiroshige",
                           show_legend = TRUE, wide_legend = TRUE,
-                          diff_comparison_path = "data/estimates/world.csv")
+                          diff_comparison_path = "estimates/world.csv")
 
 ggarrange(effectiveness_fig, no_waning_fig,
           ncol = 2, nrow = 1, labels = "AUTO", font.label = list(size = 30),
@@ -513,7 +513,7 @@ variola_major <- main_function(other_age_data = NA,
                                waning = 0.911, include_natural_immunity = FALSE, 
                                is_bootstrap = FALSE)
 write_csv(variola_major %>% select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible), 
-          "data/estimates/variola-major-sensitivity.csv")
+          "estimates/variola-major-sensitivity.csv")
 major_diff <- variola_major %>% rename(perc_susceptible_maj = perc_susceptible) %>% 
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_maj) %>% 
   left_join(main_estimates) %>% 
@@ -532,7 +532,7 @@ variola_minor <- main_function(other_age_data = NA,
                                waning = 0.749, include_natural_immunity = FALSE, 
                                is_bootstrap = FALSE)
 write_csv(variola_minor %>% select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible), 
-          "data/estimates/variola-minor-sensitivity.csv")
+          "estimates/variola-minor-sensitivity.csv")
 minor_diff <- variola_minor %>% rename(perc_susceptible_min = perc_susceptible) %>% 
   select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_min) %>% 
   left_join(main_estimates) %>% 
@@ -558,13 +558,13 @@ uncertainty_estimates <- read_csv("data/bootstrapped_estimates_5000_musig.csv")
 avg_diff <- uncertainty_estimates %>% 
   left_join(main_estimates) %>% 
   mutate(diff = mu - perc_susceptible)
-write_csv(avg_diff, "data/estimates/uncertainty-differences.csv")
+write_csv(avg_diff, "estimates/uncertainty-differences.csv")
 avg <- map_main(uncertainty_estimates %>% rename(perc_susceptible = mu),
                 do_plot_difference = TRUE, var_to_plot = "difference",
                 legend_title = "Difference in population\nsusceptibility (% of popn)",
                 lower = -35, upper = 35, palette = "Hiroshige",
                 show_legend = TRUE, wide_legend = TRUE,
-                diff_comparison_path = "data/estimates/world.csv") +
+                diff_comparison_path = "estimates/world.csv") +
   theme(legend.position = "bottom")
 
 stdev <- map_main(uncertainty_estimates,

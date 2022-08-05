@@ -75,7 +75,7 @@ for(i in 1:length(regions)){
           legend.title = element_text(size = 20),
           legend.key.size = unit(1, "cm")) +
     guides(col = guide_legend(ncol = case_when(regions[i] == "Caribbean" ~ 4,
-                                               regions[i] == "East Asia" ~ 3,
+                                               regions[i] == "Eastern Asia" ~ 3,
                                                ! is.na(regions[i]) ~ 5))) +
     labs(x = "Age group", y = "Percent susceptible", col = "Country") +
     ylim(15, 100) +

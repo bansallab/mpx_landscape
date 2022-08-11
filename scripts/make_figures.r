@@ -32,7 +32,7 @@ state_values <- main_estimates %>% filter(COUNTRYNM == "united states") %>%
 # write_csv(state_values, "estimates/us-by-state.csv")
 
 ### scatters
-boot_notes <- read_csv("data/data/cessation_coverage_estimates.csv") %>% 
+boot_notes <- read_csv("data/cessation_coverage_estimates.csv") %>% 
   mutate(is_default_cvg = ifelse(is.na(`Vax Coverage Methods/Notes`), 0,
                                  ifelse(`Vax Coverage Methods/Notes` == "Default WHO target coverage (80%)",
                                         1, 0)),

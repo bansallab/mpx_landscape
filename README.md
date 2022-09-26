@@ -1,6 +1,6 @@
-# The global landscape of susceptibility to orthopoxviruses: The legacy of smallpox vaccination
+# The global landscape of smallpox vaccination history-- Data & Code
 
-This repository provides the data and source code for the following study: Juliana C. Taube, Eva C. Rest, James O. Lloyd-Smith, Shweta Bansal. "The global landscape of susceptibility to orthopoxviruses: The legacy of smallpox vaccination." (in submission)
+This repository provides the data and source code for the following study: Juliana C. Taube, Eva C. Rest, James O. Lloyd-Smith, Shweta Bansal. "The global landscape of smallpox vaccination history: Implications for current and future orthopoxvirus susceptibility." https://doi.org/10.1101/2022.07.29.22278217
 
 ## How to use this resource
 To rerun the analysis and reproduce the figures, start by opening `mpx_landscape.Rproj`. From here, run the `make_figures.R` script to reproduce the main figures in the text and many of the supplementary figures. Brief descriptions of the other scripts can be found below.

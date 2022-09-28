@@ -9,12 +9,13 @@ library(MetBrewer)
 library(ggpubr)
 library(cowplot)
 library(patchwork)
-library(tidycensus)
+#library(tidycensus)
 library(tigris)
 library(tmap)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(extraDistr)
+library(NatParksPalettes)
 
 # RUN monkeypox_world_data_cleaning.r FIRST
 # RUN world_national_age_dists.r FIRST
@@ -22,16 +23,14 @@ library(extraDistr)
 
 ### source other scripts
 source("scripts/scar_survey_coverage_calcs.r")
-source("scripts/calc_immunity.r")
 source("scripts/calc_immunity_us.r")
+source("scripts/calc_immunity_split.r")
 source("scripts/draw_maps.r")
-source("scripts/calc_country_ests.r")
 
 ### set constants
-#WANING <- 0.807
+WANING <- 0.807
 DEFAULT_COVERAGE <- 0.8
 US_SPX_COVG <- 0.95
-PERC_MISSED_CASES <- 0.5 # 50%
 
 ### read in other datasets
 
@@ -56,17 +55,20 @@ polio_proxy_coverage <- read_csv("data/polio95_3dose_states.csv") %>%
                                             spx_coverage))) # factor in spx national avg
 
 # world age data
-gpw <- read_csv("data/cleaned_gpw_age_data.csv")
+gpw <- read_csv("data/cleaned_gpw_age_data_props.csv")
+
+# age distribution differences
+age_dist_differences <- read_csv("data/age_dist_absolute_differences_stdevs.csv")
 
 # us age and place of birth data
 pums_data <- read_csv("data/extracted_pums_2019data_age_birthplace_weights_region.csv") %>% 
   mutate(birth_year = 2022 - AGEP) 
 
 # aggregated age distributions
-national_age_dist <- read_csv("data/national_age_dist.csv")
-world_age_dist <- read_csv("data/world_age_dist.csv")
-new_national_weights <- read_csv("data/us_national_weights_age_dist.csv")
-new_world_weights <- read_csv("data/us_world_weights_age_dist.csv")
+national_age_dist <- read_csv("data/national_age_dist.csv") # if want UN data then do un_XXX
+world_age_dist <- read_csv("data/world_age_dist.csv") # if want UN data then do un_XXX
+# new_national_weights <- read_csv("data/us_national_weights_age_dist.csv")
+# new_world_weights <- read_csv("data/us_world_weights_age_dist.csv")
 
 # gadm shapefiles
 orig_gadm404 <- st_read("data/gadm404-levels.gpkg",
@@ -85,8 +87,8 @@ gadm_clean <- read_csv("data/cleaned_gadm_data_noshapefile.csv")
 spread_gpw <- read_csv("data/one_gpw_to_multiple_gadms.csv")
 
 # natural immunity estimates
-nat_immunity <- read_csv("data/nat_immunity_cumulative_prop_infected.csv") %>% 
-  select(-country)
+# nat_immunity <- read_csv("data/nat_immunity_cumulative_prop_infected.csv") %>% 
+#   select(-country)
 
 # for state conversion
 state_fips <- read_csv("data/state_fips.csv") %>% 

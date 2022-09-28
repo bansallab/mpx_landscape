@@ -1,12 +1,12 @@
-### FUNCTION TO CALCULATE PERCENTAGE OF PUMAS LEVEL POPULATION PROTECTED IN US FOR
+### FUNCTION TO CALCULATE PERCENTAGE OF PUMAS LEVEL POPULATION VACCINATED IN US FOR
 ###   MAIN ESTIMATES AND COUNTERFACTUALS
 ### AGGREGATES TO ADMIN1 (STATE) LEVEL IF USING IN WORLD MAP
 ### Juliana Taube
 
 main_us_function <- function(data_to_use, is_diff_age_dist, 
                           for_world_map, is_100_covg, is_1984_end, 
-                          waning, no_immigration, cess_cvg_data){ # think about whether need natural immunity condition
-  WANING <- waning
+                          no_immigration, homogeneous_vax_covg,
+                          cess_cvg_data){
   
   #data_to_use <- data_to_use %>% left_join(cess_cvg_data, by = ("POBP"))
   if(is_100_covg){
@@ -35,7 +35,16 @@ main_us_function <- function(data_to_use, is_diff_age_dist,
              chance_vaxxed = ifelse(birth_year <= vax_stopped, spx_coverage, 0))
                                     #ifelse(!is.na(spx_coverage), spx_coverage, DEFAULT_COVERAGE), 
                                     #0)) 
-    
+  }else if(homogeneous_vax_covg){ # homogeneous within US, other countries can still differ
+    df <- data_to_use %>% left_join(cess_cvg_data, by = ("POBP")) %>% 
+      rowwise() %>% 
+      mutate(vax_stopped = ifelse(POBP < 60, 1972, vax_stopped), # was < 100
+             Country = ifelse(POBP < 60, "USA", Country),
+             chance_vaxxed = ifelse(POBP >= 100, # foreign born
+                                    calc_vax_coverage_foreign(birth_year, Survey_Year,
+                                                              vax_stopped, cvg_514_orig, 
+                                                              cvg_over14_orig, cvg_tot_orig),
+                                    ifelse(birth_year <= vax_stopped, US_SPX_COVG, 0)))
   }else if(is_diff_age_dist){ # data being used here will be one of the datasets with recalculated weights
     df <- data_to_use %>% rowwise() %>% 
       mutate(min_age = as.numeric(substring(age_5, 2, 3)),
@@ -77,19 +86,16 @@ main_us_function <- function(data_to_use, is_diff_age_dist,
   
   if(is_diff_age_dist){
     prop_by_puma <- df %>% group_by(PUMA, ST) %>% 
-      summarise(prop_vaxxed = weighted.mean(chance_vaxxed, age_group_weight, na.rm = T),
-                prop_protected = prop_vaxxed * WANING) %>% # for waning/cross-immunity
+      summarise(prop_vaxxed = weighted.mean(chance_vaxxed, age_group_weight, na.rm = T)) %>% 
       ungroup()
-  }else if(is_100_covg | is_1984_end | no_immigration){
-    prop_by_puma <- df %>% group_by(PUMA, ST) %>% 
+  }else if(is_100_covg | is_1984_end | no_immigration | homogeneous_vax_covg){
+    prop_by_puma <- df %>% group_by(PUMA, ST, REGION) %>% 
       summarise(prop_vaxxed = weighted.mean(chance_vaxxed, PWGTP, na.rm = T),
-                prop_protected = prop_vaxxed * WANING,
                 pop_size = sum(PWGTP)) %>% # 
       ungroup()
   }else{
-    prop_by_puma <- df %>% group_by(PUMA, ST) %>% 
+    prop_by_puma <- df %>% group_by(PUMA, ST, REGION) %>% 
       summarise(prop_vaxxed = weighted.mean(chance_vaxxed, PWGTP, na.rm = T),
-                prop_protected = prop_vaxxed * WANING,
                 pop_size = sum(PWGTP),
                 perc_born_before_1980 = weighted.mean(prop_born_before_1980, PWGTP) * 100,
                 perc_born_before_cessation = weighted.mean(prop_born_before_cessation, PWGTP, na.rm = T),
@@ -98,35 +104,33 @@ main_us_function <- function(data_to_use, is_diff_age_dist,
       ungroup()
   }
   
+  
   if(!for_world_map){
-    prop_by_puma <- prop_by_puma %>% 
-      mutate(perc_susceptible = (1 - prop_protected) * 100) %>% # waning already incorporated above
-      select(-prop_protected, -prop_vaxxed)
+    prop_by_puma <- prop_by_puma %>% mutate(perc_vaxxed = prop_vaxxed * 100)
     return(prop_by_puma)
   }else{
     if(is_diff_age_dist){
       prop_by_state <- df %>% group_by(ST) %>% 
-        summarise(prop_vaxxed = weighted.mean(chance_vaxxed, age_group_weight, na.rm = T),
-                  perc_susceptible = (1 - (prop_vaxxed * WANING)) * 100) %>% 
+        summarise(prop_vaxxed = weighted.mean(chance_vaxxed, age_group_weight, na.rm = T)) %>% 
         ungroup() %>% 
         left_join(state_fips, by = c("ST" = "fips")) %>% 
-        select(state, perc_susceptible) %>% 
+        select(state, prop_vaxxed) %>% 
         mutate(ISOALPHA = "USA",
-               COUNTRYNM = "united states")
-    }else if(is_100_covg | is_1984_end | no_immigration){
-      prop_by_state <- df %>% group_by(ST) %>% 
+               COUNTRYNM = "united states",
+               perc_vaxxed = prop_vaxxed * 100)
+    }else if(is_100_covg | is_1984_end | no_immigration | homogeneous_vax_covg){
+      prop_by_state <- df %>% group_by(ST, REGION) %>% 
         summarise(prop_vaxxed = weighted.mean(chance_vaxxed, PWGTP, na.rm = T),
-                  perc_susceptible = (1 - (prop_vaxxed * WANING)) * 100,
                   pop_size = sum(PWGTP)) %>% 
         ungroup() %>% 
         left_join(state_fips, by = c("ST" = "fips")) %>% 
-        select(state, perc_susceptible, pop_size) %>% 
+        select(state, prop_vaxxed, pop_size) %>% 
         mutate(ISOALPHA = "USA",
-               COUNTRYNM = "united states")
+               COUNTRYNM = "united states",
+               perc_vaxxed = prop_vaxxed * 100)
     }else{
-      prop_by_state <- df %>% group_by(ST) %>% 
+      prop_by_state <- df %>% group_by(ST, REGION) %>% 
         summarise(prop_vaxxed = weighted.mean(chance_vaxxed, PWGTP, na.rm = T),
-                  perc_susceptible = (1 - (prop_vaxxed * WANING)) * 100,
                   pop_size = sum(PWGTP),
                   perc_born_before_1980 = weighted.mean(prop_born_before_1980, PWGTP) * 100,
                   perc_born_before_cessation = weighted.mean(prop_born_before_cessation, PWGTP, na.rm = T) * 100,
@@ -135,10 +139,11 @@ main_us_function <- function(data_to_use, is_diff_age_dist,
                   overall_cvg = weighted.mean(overall_cvg, PWGTP, na.rm = T) * 100) %>% 
         ungroup() %>% 
         left_join(state_fips, by = c("ST" = "fips")) %>% 
-        select(state, perc_susceptible, pop_size, overall_cvg, perc_born_before_1980,
+        select(state, prop_vaxxed, pop_size, overall_cvg, perc_born_before_1980,
                perc_born_before_cessation, perc_foreign_born, mean_age) %>% 
         mutate(ISOALPHA = "USA",
-               COUNTRYNM = "united states")
+               COUNTRYNM = "united states",
+               perc_vaxxed = prop_vaxxed * 100)
     }
     
     return(prop_by_state)

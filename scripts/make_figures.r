@@ -3,42 +3,63 @@
 
 source("scripts/load_files_for_run.r")
 
-### CALLING FUNCTIONS TO MAKE FIGURES ### -------------------------------------
+########################################################################
+### GLOBAL ESTIMATES ###################################################
+########################################################################
+main_estimates <- calc_admin1_perc_vaxxed(vaxxed_by_age = calc_prop_vaxxed(other_age_data = NA,
+                                                                                is_diff_age_dist = FALSE,
+                                                                                is_world_age_dist = FALSE,
+                                                                                is_100_covg = FALSE,
+                                                                                is_1984_end = FALSE,
+                                                                                is_bootstrap = FALSE),
+                                          is_world_age_dist = FALSE,
+                                          is_diff_age_dist = FALSE,
+                                          is_100_covg = FALSE,
+                                          is_1984_end = FALSE,
+                                          is_bootstrap = FALSE) 
 
-# main_estimates <- main_function(other_age_data = NA, is_diff_age_dist = FALSE,
-#                                 is_world_age_dist = FALSE, is_100_covg = FALSE,
-#                                 is_1984_end = FALSE, waning = 0.807,
-#                                 include_natural_immunity = FALSE, is_bootstrap = FALSE)
-# write_csv(main_estimates, "estimates/world.csv")
-main_estimates <- read_csv("estimates/world.csv")
+write_csv(main_estimates, "estimates/vaxxed-world.csv")
+main_estimates <- read_csv("estimates/vaxxed-world.csv")
 
+########################################################################
+### COUNTRY LEVEL ESTIMATES FOR SCATTER AND BAR PLOTS ##################
+########################################################################
 # could use this for bar chart now
 national_values <- main_estimates %>% group_by(ISOALPHA, COUNTRYNM) %>% 
-  summarise(mean_susceptibility = weighted.mean(perc_susceptible, pop_size),
-            overall_cvg = weighted.mean(overall_cvg, pop_size, na.rm = T),
-            mean_age = weighted.mean(mean_age, pop_size, na.rm = T),
-            perc_born_before_1980 = weighted.mean(perc_born_before_1980, pop_size, na.rm = T),
-            perc_born_before_cessation = weighted.mean(perc_born_before_cessation, pop_size, na.rm = T),
-            min_admin1_susc = min(perc_susceptible),
-            max_admin1_susc = max(perc_susceptible),
-            std_admin1_susc = sd(perc_susceptible)) %>% 
-  mutate(across(c(mean_susceptibility, overall_cvg, perc_born_before_cessation),
+  summarise(mean_vax = weighted.mean(perc_vaxxed, tot_popn_2020), # use 2020 population size!! weighting admin1 regions which we can do recently
+            overall_cvg = weighted.mean(overall_cvg, tot_popn_2020, na.rm = T),
+            mean_age = weighted.mean(mean_age, tot_popn_2020, na.rm = T),
+            perc_born_before_1980 = weighted.mean(perc_born_before_1980, tot_popn_2020, na.rm = T),
+            perc_born_before_cessation = weighted.mean(perc_born_before_cessation, tot_popn_2020, na.rm = T),
+            min_admin1_vax = min(perc_vaxxed),
+            max_admin1_vax = max(perc_vaxxed),
+            std_admin1_vax = sd(perc_vaxxed)) %>% 
+  ungroup() %>% 
+  mutate(across(c(mean_vax, overall_cvg, perc_born_before_cessation),
                 ~ ifelse(is.nan(.x), NA_real_, .x))) # replace NaN with NA
 # write_csv(national_values, "estimates/world-by-country.csv")
 # post-hoc fix to include regions without rerunning right now
-state_values <- main_estimates %>% filter(COUNTRYNM == "united states") %>% 
-  left_join((state_fips %>% select(state, fips)), by = c("NAME1" = "state")) %>% 
+state_values <- main_estimates %>% filter(ISOALPHA == "USA") %>%
+  left_join((state_fips %>% select(state, fips)), by = c("NAME1" = "state")) %>%
   left_join((pums_data %>% select(ST, REGION) %>% distinct()), by = c("fips" = "ST"))
+
+state_values <- state_values %>%
+  mutate(region = as.factor(case_when(REGION == 3 ~ "South",
+                                      REGION == 4 ~ "West",
+                                      REGION == 1 ~ "Northeast",
+                                      REGION == 2 ~ "Midwest")))
 # write_csv(state_values, "estimates/us-by-state.csv")
 
 ### scatters
 boot_notes <- read_csv("data/cessation_coverage_estimates.csv") %>% 
-  mutate(is_default_cvg = ifelse(is.na(`Vax Coverage Methods/Notes`), 0,
-                                 ifelse(`Vax Coverage Methods/Notes` == "Default WHO target coverage (80%)",
-                                        1, 0)),
-         is_default_cess = ifelse(is.na(`Cessation Date Method/Notes`), 0,
-                                  ifelse(`Cessation Date Method/Notes` == "Default WHO cessation date (1980)", 
-                                         1, 0)),
+  mutate(is_default_cvg = ifelse(cvg_data_quality == "D", 1, 0),
+         # is.na(`Vax Coverage Methods/Notes`), 0,
+         #                         ifelse(grepl("Default WHO target coverage (80%)", `Vax Coverage Methods/Notes`),
+         #                                1, 0)),
+         is_default_cess = ifelse(cessation_data_quality == "D", 1, 0),
+           # ifelse(is.na(`Cessation Date Method/Notes`), 0,
+           #                        ifelse(`Cessation Date Method/Notes` == "Default WHO cessation date (1980)", 
+           #                               1, 0)),
          grouped_region = case_when(Region == "SA" ~ "Asia",
                                     Region == "SE" ~ "Asia",
                                     Region == "AM" ~ "Americas",
@@ -48,37 +69,36 @@ boot_notes <- read_csv("data/cessation_coverage_estimates.csv") %>%
                                     Region == "SR" ~ "Europe",
                                     Region == "PA" ~ "Pacific",
                                     Region == "AF" ~ "Africa")) %>% 
+  filter(!is.na(Country_ISO_Code)) %>% 
   rename(ISOALPHA = Country_ISO_Code) %>% 
   select(ISOALPHA, grouped_region, is_default_cvg, is_default_cess, cessdate_orig)
 # GLOBAL first
 # remove countries with no estimates
 national_values <- national_values %>% 
-  filter(!is.na(mean_susceptibility)) %>% 
+  filter(!is.na(mean_vax)) %>% 
   left_join(boot_notes) %>% 
   mutate(grouped_region = ifelse(COUNTRYNM == "united states", "Americas", grouped_region)) %>% 
   distinct()
+
 # pearson correlations
-c1 <- cor.test((national_values %>% filter(is_default_cvg == 0, overall_cvg >= 40))$mean_susceptibility,
-               (national_values %>% filter(is_default_cvg == 0, overall_cvg >= 40))$overall_cvg)
-# c2 <- cor.test(national_values$mean_susceptibility, national_values$mean_age)
-c3 <- cor.test(national_values$mean_susceptibility, national_values$perc_born_before_1980)
-# c4 <- cor.test((national_values %>% filter(is_default_cess == 0))$mean_susceptibility,
-#                (national_values %>% filter(is_default_cess == 0))$perc_born_before_cessation)
-c5 <- cor.test((national_values %>% filter(is_default_cess == 0, cessdate_orig >= 1965))$mean_susceptibility,
-               (national_values %>% filter(is_default_cess == 0, cessdate_orig >= 1965))$cessdate_orig)
+c1 <- cor.test(national_values$mean_vax, national_values$overall_cvg)
+c3 <- cor.test(national_values$mean_vax, national_values$perc_born_before_1980)
+c5 <- cor.test(national_values$mean_vax, national_values$cessdate_orig)
 
 # 44 missing mean_susceptibility, ignore warning
 # vax coverage
 p1 <- national_values %>%  
   filter(is_default_cvg == 0) %>% # remove default 80% coverages
   #filter(overall_cvg > 60) %>%  # remove outliers
-  ggplot(aes(x = overall_cvg, y = mean_susceptibility)) +
+  ggplot(aes(x = overall_cvg, y = mean_vax)) +
   geom_point(aes(col = grouped_region), size = 3, alpha = 0.5) +
   # remove outliers & defaults from smooth
-  geom_smooth(data = (national_values %>% filter(is_default_cvg == 0, overall_cvg >= 40)),
-              method = "lm", col = "black") +
-  labs(x = "Smallpox vaccination coverage", y = "Percent susceptible", col = "Region") +
-  ylim(55, 95) +
+  geom_smooth(method = "lm", col = "black") +
+  # annotate("text", x=40, y=40, 
+  #          label=(paste0("slope==", round(coef(lm(national_values$mean_vax ~ national_values$overall_cvg))[2], 3))),
+  #          parse=TRUE, size = 6) +
+  labs(x = "Pre-eradication smallpox vacc. covg.", y = "Percent vaccinated", col = "Region") +
+  ylim(5, 50) +
   scale_x_continuous(breaks = c(30, 50, 70, 90)) +
   scale_color_manual(values = met.brewer("Johnson", 5)) +
   theme_bw() +
@@ -86,198 +106,299 @@ p1 <- national_values %>%
         axis.title = element_text(size = 15.5),
         legend.text = element_text(size = 16),
         legend.title = element_text(size = 18))
-# mean age
-# p2 <- national_values %>% ggplot(aes(x = mean_age, y = mean_susceptibility)) +
-#   geom_point(size = 2, col = "dimgrey", alpha = 0.75) +
-#   geom_smooth(method = "lm", col = "black") +
-#   labs(x = "Mean age", y = "Percent susceptible") +
-#   ylim(55, 95) +
-#   theme_bw()
 # born before 1980
 p3 <- national_values %>% 
-  ggplot(aes(x = perc_born_before_1980, y = mean_susceptibility)) +
+  ggplot(aes(x = perc_born_before_1980, y = mean_vax)) +
   geom_point(aes(col = grouped_region), size = 3, alpha = 0.5) +
   geom_smooth(method = "lm", col = "black") +
-  labs(x = "Percent born before 1980", y = "Percent susceptible", col = "Region") +
-  ylim(55, 95) +
+  # annotate("text", x=20, y=40, 
+  #          label=(paste0("slope==", round(coef(lm(national_values$mean_vax ~ national_values$perc_born_before_1980))[2], 3))),
+  #          parse=TRUE, size = 6) +
+  labs(x = "Percent born before 1980", y = "Percent vaccinated", col = "Region") +
+  ylim(5, 50) +
   xlim(10, 58) +
   scale_color_manual(values = met.brewer("Johnson", 5)) +
   theme_bw() +
-  theme(axis.text = element_text(size = 13.5),
-        axis.title = element_text(size = 15.5),
+  theme(axis.text.x = element_text(size = 13.5),
+        axis.title.x = element_text(size = 15.5),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
         legend.text = element_text(size = 16),
         legend.title = element_text(size = 18))
-# born before cessation
-# p4 <- national_values %>%  
-#   filter(is_default_cess == 0) %>% # remove default cess dates
-#   ggplot(aes(x = perc_born_before_cessation, y = mean_susceptibility)) +
-#   geom_point(size = 2, col = "dimgrey", alpha = 0.75) +
-#   geom_smooth(method = "lm", col = "black") +
-#   labs(x = "Percent born before cessation", y = "Percent susceptible") +
-#   ylim(55, 95) +
-#   theme_bw()
 # cessation date
-p5 <- national_values %>% 
-  filter(is_default_cess == 0) %>%  # remove default cess dates
-  ggplot(aes(x = cessdate_orig, y = mean_susceptibility)) +
+# remove default cess dates
+national_values_valid_cess <- national_values %>% filter(is_default_cess == 0)
+p5 <- national_values_valid_cess %>% 
+  ggplot(aes(x = cessdate_orig, y = mean_vax)) +
   geom_point(aes(col = grouped_region), size = 3, alpha = 0.5) +
-  geom_smooth(data = (national_values %>% filter(is_default_cess == 0, cessdate_orig >= 1965)),
-              method = "lm", col = "black") +
+  geom_smooth(method = "lm", col = "black") +
+  # annotate("text", x=1964, y=40,
+  #          label=(paste0("slope==",
+  #                        round(coef(lm(national_values_valid_cess$mean_vax ~ national_values_valid_cess$cessdate_orig))[2], 3))),
+  #          parse=TRUE, size = 6) +
   labs(x = "Smallpox vaccination cessation", y = "Percent susceptible", col = "Region") +
-  ylim(55, 95) +
+  ylim(5, 50) +
   scale_x_continuous(breaks = c(1960, 1964, 1968, 1972, 1976, 1980, 1984),
                      labels = c("1960", "", "1968", "", "1976", "", "1984")) +
   scale_color_manual(values = met.brewer("Johnson", 5)) +
   theme_bw() +
-  theme(axis.text = element_text(size = 13.5),
-        axis.title = element_text(size = 15.5),
+  theme(axis.text.x = element_text(size = 13.5),
+        axis.title.x = element_text(size = 15.5),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
         legend.text = element_text(size = 16),
         legend.title = element_text(size = 18))
 
-fig1_for_legend <- map_main(main_estimates,
-                            do_plot_difference = FALSE, var_to_plot = "perc_susceptible",
-                            legend_title = "Population\nsusceptibility\n(% of popn)", 
-                            lower = 45, upper = 100, palette = "VanGogh3",
+
+########################################################################
+### FIGURE 1. GLOBAL SPATIAL HETEROGENEITY AND DRIVERS #################
+########################################################################
+fig1sf <- join_shape_data(main_estimates, 
+                          do_plot_difference = FALSE,
+                          diff_comparison_path = NA)
+saveRDS(fig1sf, "data/world-estimates-vaxxed-sf.RDS")
+fig1_for_legend <- map_ests(fig1sf,
+                            do_plot_difference = FALSE, var_to_plot = "perc_vaxxed",
+                            legend_title = "Population\nvaccinated\n(% of popn)", 
+                            lower = 5, upper = 70, palette = "VanGogh3",
                             show_legend = TRUE, wide_legend = FALSE)
 
 legend <- cowplot::get_legend(fig1_for_legend)
-fig1_map <- map_main(main_estimates,
-                     do_plot_difference = FALSE, var_to_plot = "perc_susceptible",
-                     legend_title = "Population\nsusceptibility\n(% of popn)", 
-                     lower = 45, upper = 100, palette = "VanGogh3",
+fig1_map <- map_ests(fig1sf, do_plot_difference = FALSE, var_to_plot = "perc_vaxxed",
+                     legend_title = "Population\nvaccinated\n(% of popn)", 
+                     lower = 5, upper = 70, palette = "VanGogh3",
                      show_legend = FALSE, wide_legend = FALSE)
 
 
 ggarrange(fig1_map + inset_element(legend, left = 0, bottom = 0.1, right = 0.25, top = 0.5, 
                                    align_to = "panel", on_top = T),
-          ggarrange(p1, p5, p3, ncol = 3, nrow = 1, labels = c("B", "C", "D"), 
+          ggarrange(p1, p5, p3, ncol = 3, nrow = 1, labels = c("B", "", ""), widths = c(4, 3.5, 3.5),
                     font.label = list(size = 20), common.legend = TRUE, legend = "bottom"), 
           ncol = 1, nrow = 2, heights = c(5, 4), labels = c("A", ""),
           font.label = list(size = 20))
-ggsave("figures/fig1.png", height = 8, width = 11, dpi = 600)
-ggsave("figures/fig1.pdf", height = 8, width = 11, dpi = 600)
+ggsave("figures/fig1.pdf", height = 8, width = 12, dpi = 600)
 dev.off()
 
-# us scatterplots
-# pearson correlations
-c1 <- cor.test((state_values %>% filter(overall_cvg >= 85))$perc_susceptible,
-               (state_values %>% filter(overall_cvg >= 85))$overall_cvg)
-# c2 <- cor.test(state_values$perc_susceptible, state_values$mean_age)
-c3 <- cor.test(state_values$perc_susceptible, state_values$perc_born_before_1980)
-# c4 <- cor.test(state_values$perc_susceptible, state_values$perc_born_before_cessation)
-c5 <- cor.test(state_values$perc_susceptible, state_values$perc_foreign_born)
 
-state_values <- state_values %>% 
-  mutate(region = as.factor(case_when(REGION == 3 ~ "South",
-                            REGION == 4 ~ "West",
-                            REGION == 1 ~ "Northeast",
-                            REGION == 2 ~ "Midwest")))
-# vax coverage
-p1 <- state_values %>% 
-  ggplot(aes(x = overall_cvg, y = perc_susceptible)) +
-  geom_point(aes(col = region), size = 3, alpha = 0.6) +
-  # remove outliers from smooth
-  geom_smooth(data = (state_values %>% filter(overall_cvg >= 85)),
-              method = "lm", col = "black") +
-  labs(x = "Smallpox vaccination coverage", y = "Percent susceptible", col = "Region") +
-  ylim(55, 95) +
-  scale_color_manual(values = met.brewer("Egypt", 4)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 13.5),
-        axis.title = element_text(size = 15.5),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 18))
-# mean age
-# p2 <- state_values %>% ggplot(aes(x = mean_age, y = perc_susceptible)) +
-#   geom_point(size = 2, col = "dimgrey", alpha = 0.75) +
-#   geom_smooth(method = "lm", col = "black") +
-#   labs(x = "Mean age", y = "Percent susceptible") +
-#   ylim(55, 95) +
-#   theme_bw()
-# born before 1980
-p3 <- state_values %>% ggplot(aes(x = perc_born_before_1980, y = perc_susceptible)) +
-  geom_point(aes(col = region), size = 3, alpha = 0.6) +
-  geom_smooth(method = "lm", col = "black") +
-  labs(x = "Percent born before 1980", y = "Percent susceptible", col = "Region") +
-  ylim(55, 95) +
-  scale_color_manual(values = met.brewer("Egypt", 4)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 13.5),
-        axis.title = element_text(size = 15.5),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 18))
-# born before cessation
-# p4 <- state_values %>%
-#   ggplot(aes(x = perc_born_before_cessation, y = perc_susceptible)) +
-#   geom_point(size = 2, col = "dimgrey", alpha = 0.75) +
-#   geom_smooth(method = "lm", col = "black") +
-#   labs(x = "Percent born before cessation", y = "Percent susceptible") +
-#   ylim(55, 95) +
-#   theme_bw()
-# immigrant proportion
-p5 <- state_values %>% 
-  ggplot(aes(x = perc_foreign_born, y = perc_susceptible)) +
-  geom_point(aes(col = region), size = 3, alpha = 0.6) +
-  geom_smooth(method = "lm", col = "black") +
-  labs(x = "Percent foreign-born", y = "Percent susceptible", col = "Region") +
-  ylim(55, 95) +
-  scale_color_manual(values = met.brewer("Egypt", 4)) +
-  theme_bw() +
-  theme(axis.text = element_text(size = 13.5),
-        axis.title = element_text(size = 15.5),
-        legend.text = element_text(size = 16),
-        legend.title = element_text(size = 18))
+########################################################################
+### US DATA SCALE COMPARISON ###########################################
+########################################################################
+# us fine map / comparison
+us_state_gpw <- main_estimates %>% filter(ISOALPHA == "USA")
+pumas_for_join <- data.frame(state_fips = all_pumas$ST, 
+                             PUMA = all_pumas$PUMA)
+# need to apply these state level predictions to each puma level
+us_state_gpw_pumas_level <- us_state_gpw %>% left_join(state_fips, by = c("NAME1" = "state")) %>% 
+  left_join(pumas_for_join, by = c("fips" = "state_fips")) %>% 
+  rename(ST = fips)
+# this mapping code works, great! now need to do difference
+# map_us(us_state_gpw_pumas_level, var_to_plot = "perc_vaxxed",
+#        legend_title = "Percent vaccinated", lower = 5, upper = 70, 
+#        palette = "VanGogh3", show_legend = TRUE)
+us_puma_no_immigration <- main_us_function(data_to_use = pums_data, is_diff_age_dist = FALSE,
+                                           for_world_map = FALSE, is_100_covg = FALSE,
+                                           is_1984_end = FALSE, no_immigration = TRUE, 
+                                           homogeneous_vax_covg = FALSE,
+                                           cess_cvg_data = cessation_coverage_data)
+# this is homogeneous vax in the US, other countries can be different
+us_puma_homogeneous_vax <- main_us_function(data_to_use = pums_data, is_diff_age_dist = FALSE,
+                                           for_world_map = FALSE, is_100_covg = FALSE,
+                                           is_1984_end = FALSE, no_immigration = FALSE, 
+                                           homogeneous_vax_covg = TRUE,
+                                           cess_cvg_data = cessation_coverage_data)
+us_puma_all_info <- main_us_function(data_to_use = pums_data, is_diff_age_dist = FALSE,
+                                     for_world_map = FALSE, is_100_covg = FALSE,
+                                     is_1984_end = FALSE, no_immigration = FALSE, 
+                                     homogeneous_vax_covg = FALSE,
+                                     cess_cvg_data = cessation_coverage_data)
+write_csv(us_puma_all_info, "estimates/vaxxed-us-pumas.csv")
+us_puma_all_info <- read_csv("estimates/vaxxed-us-pumas.csv")
 
-# us fine map
-# us_estimates <- main_us_function(data_to_use = pums_data, is_diff_age_dist = FALSE,
-#                                  for_world_map = FALSE, is_100_covg = FALSE,
-#                                  is_1984_end = FALSE, waning = 0.807,
-#                                  no_immigration = FALSE,
-#                                  cess_cvg_data = cessation_coverage_data)
-# write_csv(us_estimates, "estimates/us.csv")
-us_estimates <- read_csv("estimates/us.csv")
+# calculate differences to plot
+state_diff <- us_state_gpw_pumas_level %>% select(ST, PUMA, perc_vaxxed) %>% 
+  rename(perc_vaxxed_state = perc_vaxxed) %>% 
+  left_join(us_puma_all_info) %>% 
+  mutate(diff = perc_vaxxed_state - perc_vaxxed)
+no_immigration_diff <- us_puma_no_immigration %>% select(ST, PUMA, perc_vaxxed) %>% 
+  rename(perc_vaxxed_no_immigration = perc_vaxxed) %>% 
+  left_join(us_puma_all_info) %>% 
+  mutate(diff = perc_vaxxed_no_immigration - perc_vaxxed)
+homogeneous_vax_diff <- us_puma_homogeneous_vax %>% select(ST, PUMA, perc_vaxxed) %>% 
+  rename(perc_vaxxed_homogeneous = perc_vaxxed) %>% 
+  left_join(us_puma_all_info) %>% 
+  mutate(diff = perc_vaxxed_homogeneous - perc_vaxxed)
 
-fig2_map <- map_us(us_estimates,
-                   do_plot_difference = FALSE,
-                   var_to_plot = "perc_susceptible",
-                   legend_title = "Population\nsusceptibility\n(% of popn)",
-                   lower = 45, upper = 100, palette = "VanGogh3", 
-                   show_legend = FALSE)
+# library(usmap)
+# p1 <- plot_usmap(data = (us_state_gpw %>% rename(state = NAME1)), values = "perc_vaxxed", size = 0.2) +
+#   scale_fill_gradientn(colors = met.brewer("VanGogh3"),
+#                        name = "Percent vaccinated", limits = c(5, 70)) + 
+#   theme(legend.position = "right")
+# p2 <- map_us(us_puma_no_immigration,
+#              var_to_plot = "perc_vaxxed",
+#              legend_title = "Percent vaccinated",
+#              lower = 5, upper = 70, palette = "VanGogh3", 
+#              show_legend = FALSE)
+# p3 <- map_us(us_puma_homogeneous_vax,
+#              var_to_plot = "perc_vaxxed",
+#              legend_title = "Percent vaccinated",
+#              lower = 5, upper = 70, palette = "VanGogh3", 
+#              show_legend = FALSE)
+# p4 <- map_us(us_puma_all_info,
+#              var_to_plot = "perc_vaxxed",
+#              legend_title = "Percent vaccinated",
+#              lower = 5, upper = 70, palette = "VanGogh3", 
+#              show_legend = FALSE)
 
-ggarrange(fig2_map + inset_element(legend, left = 0.85, bottom = 0.05, right = 1, top = 0.45, 
-                                   align_to = "full", on_top = T),
-          ggarrange(p1, p5, p3, ncol = 3, nrow = 1, labels = c("B", "C", "D"), 
-                    font.label = list(size = 20), common.legend = TRUE, legend = "bottom"), 
-          ncol = 1, nrow = 2, heights = c(5, 3.5), labels = c("A", ""),
-          font.label = list(size = 20))
-ggsave("figures/fig2.png", height = 9, width = 11, dpi = 600)
-ggsave("figures/fig2.pdf", height = 9, width = 11, dpi = 600)
+d1 <- map_us(state_diff, var_to_plot = "diff", legend_title = "Percentage difference",
+             lower = -33, upper = 33, palette = "Hiroshige", show_legend = TRUE, wide_legend = TRUE)
+d2 <- map_us(no_immigration_diff, var_to_plot = "diff", legend_title = "Percentage difference",
+             lower = -22, upper = 22, palette = "Hiroshige", show_legend = TRUE, wide_legend = TRUE)
+d3 <- map_us(homogeneous_vax_diff, var_to_plot = "diff", legend_title = "Percentage difference",
+             lower = -7, upper = 7, palette = "Hiroshige", show_legend = TRUE, wide_legend = TRUE)
+
+# ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2, labels = "AUTO",
+#           font.label = list(size = 20))
+# ggsave("figures/us-map-scenarios.pdf", height = 10, width = 12)
+ggarrange(ggarrange(d1, d2, ncol = 2, font.label = list(size = 20), labels = "AUTO"),
+          d3, 
+          ncol = 1, nrow = 2, labels = c("", "                     C"),
+          font.label = list(size = 20), heights = c(1,1))
+ggsave("figures/us-map-scenarios-differences.pdf", height = 10, width = 12)
+dev.off()
+rm(p1, p2, p3, p4, d1, d2, d3)
+
+
+########################################################################
+### UNCERTAINTY ANALYSIS ###############################################
+########################################################################
+### uncertainty analysis
+uncertainty_estimates <- read_csv("data/bootstrapped_estimates_admin1_5000_musig.csv")
+avg_diff <- uncertainty_estimates %>% 
+  left_join(main_estimates) %>% 
+  mutate(diff = mu - perc_vaxxed,
+         abs_diff = abs(diff)) %>% 
+  filter(!is.na(mu))
+#write_csv(avg_diff, "estimates/uncertainty-differences.csv")
+# admin1 difference variability
+tot_admin1 <- nrow(avg_diff)
+frac_admin1_lt1 <- (avg_diff %>% filter(abs_diff < 1) %>% nrow())/tot_admin1
+frac_admin1_gt5 <- (avg_diff %>% filter(abs_diff > 5) %>% nrow())/tot_admin1
+
+avg <- map_ests(join_shape_data(uncertainty_estimates %>% rename(perc_vaxxed = mu), 
+                                do_plot_difference = TRUE,
+                                diff_comparison_path = "estimates/vaxxed-world.csv"),
+                do_plot_difference = TRUE, 
+                var_to_plot = "difference",
+                legend_title = "Difference in population\nvaccination (% of popn)",
+                lower = -11, upper = 11, palette = "Hiroshige",
+                show_legend = TRUE, wide_legend = TRUE) +
+  theme(legend.position = "bottom")
+
+stdev <- map_ests(join_shape_data(uncertainty_estimates, 
+                                  do_plot_difference = FALSE,
+                                  diff_comparison_path = NA),
+                  do_plot_difference = FALSE, 
+                  var_to_plot = "sigma",
+                  legend_title = "Standard deviation in\npopulation vaccination\n(% of popn)",
+                  lower = 0, upper = 6.05, palette = "Tam",
+                  show_legend = TRUE, wide_legend = TRUE) +
+  theme(legend.position = "bottom")
+
+ggarrange(avg, stdev, ncol = 1, nrow = 2, labels = "AUTO", font.label = list(size = 30))
+ggsave("figures/bootstrap-fig.pdf", dpi = 600, height = 8, width = 10)
+# ggsave("figures/bootstrap-fig.pdf", dpi = 600, height = 8, width = 10)
 dev.off()
 
-### country bar plot
+
+########################################################################
+### US CASE COUNTS VS SUSCEPTIBILITY ###################################
+########################################################################
+# NEEDS UPDATE TO SUSCEPTIBILITY
+# from https://www.cdc.gov/poxvirus/monkeypox/response/2022/us-map.html on date in file name below
+# us_case_data <- read_csv("data/us_case_counts_09_21_22.csv") %>% 
+#   mutate(NAME1 = tolower(Location))
+# library(tidycensus)
+# state_popn <- get_acs(geography = "state", 
+#                       variables = c(popn = "B01001_001"),
+#                       output = "wide",
+#                       year = 2020) %>% 
+#   mutate(NAME1 = tolower(NAME)) %>% 
+#   rename(population = popnE)
+# 
+# joined_us_data <- state_values %>% 
+#   left_join(us_case_data, by = "NAME1") %>% 
+#   left_join(state_popn %>% select(NAME1, population)) %>% 
+#   mutate(prevalence = Cases/population)
+# levels(joined_us_data$region)
+# joined_us_data %>% ggplot(aes(x = perc_vaxxed, y = prevalence)) +
+#   geom_point(aes(col = region), size = 3) +
+#   scale_color_manual(values = met.brewer("Egypt", 4), breaks = c("Midwest", "Northeast", "South", "West")) +
+#   labs(x = "Percent vaccinated", y = "Num. cases / State population") + 
+#   geom_smooth(data = joined_us_data,
+#               method = "lm", col = "black") +
+#   scale_y_log10()
+# ggsave("figures/us-cases-vs-vaccination.pdf", width = 8, height = 5, dpi = 600)
+# # joined_us_data %>% ggplot(aes(x = perc_susceptible, y = Cases, col = region)) +
+# #   geom_point(size = 3) +
+# #   scale_color_manual(values = met.brewer("Egypt", 4)) +
+# #   labs(x = "Percent susceptible", y = "Num. cases")
+# cor.test(joined_us_data$perc_vaxxed,
+#          joined_us_data$prevalence)
+# 
+# # try this with pumas level estimates
+# joined_us_data_puma <- us_puma_all_info %>% group_by(ST, REGION) %>% 
+#   summarise(mean_vax = mean(perc_vaxxed)) %>% 
+#   ungroup() %>% 
+#   left_join(state_fips, by = c("ST" = "fips")) %>% 
+#   left_join(us_case_data, by = c("state" = "NAME1")) %>% 
+#   left_join(state_popn %>% select(NAME1, population), by = c("state" = "NAME1")) %>% 
+#   rowwise() %>% 
+#   mutate(prevalence = Cases/population,
+#          region = as.factor(case_when(REGION == 2 ~ "Midwest",
+#                                       REGION == 1 ~ "Northeast",
+#                                       REGION == 3 ~ "South",
+#                                       REGION == 4 ~ "West")))
+# levels(joined_us_data_puma$region) 
+# joined_us_data_puma$region <- factor(joined_us_data_puma$region,
+#                                              levels = c("Midwest", "Northeast", "South", "West"))
+# levels(joined_us_data_puma$region) 
+# joined_us_data_puma %>% ggplot(aes(x = mean_vax, y = prevalence)) +
+#   geom_point(aes(col = region), size = 3) +
+#   scale_color_manual(values = met.brewer("Egypt", 4)) + #, breaks = c("Midwest", "Northeast", "South", "West")) +
+#   labs(x = "Percent vaccinated", y = "Num. cases / State population") + 
+#   geom_smooth(data = joined_us_data_puma,
+#               method = "lm", col = "black") +
+#   scale_y_log10()
+# ggsave("figures/us-cases-vs-vaccination-puma-agg.pdf", width = 8, height = 5, dpi = 600)
+# cor.test(joined_us_data_puma$mean_vax,
+#          joined_us_data_puma$prevalence)
+
+########################################################################
+### COUNTRY BAR PLOT ###################################################
+########################################################################
 bar_data <- national_values %>% 
   left_join(read_csv("data/cessation_coverage_estimates.csv") %>% select(Country_ISO_Code, Region),
             by = c("ISOALPHA" = "Country_ISO_Code")) %>% 
   mutate(Region = as.factor(ifelse(COUNTRYNM == "united states", "AM", Region))) %>% 
   distinct()
 levels(bar_data$Region) # check each time that order is same
-levels(bar_data$Region) <- c("South Asia", "Africa", "Europe", "Middle East",
-                             "Americas", "Former Soviet Republic",
-                             "Caribbean", "Pacific",  "Southeast and East Asia")
+levels(bar_data$Region) <- c("Africa", "Americas", "Caribbean", "Europe",
+                             "Middle East", "Pacific", "South Asia", 
+                             "Southeast and East Asia", "Former Soviet Republic")
 bar_data$Region <- factor(bar_data$Region, 
                           levels = c("Africa", "Americas", "Caribbean", "Europe",
                                      "Former Soviet Republic", "Middle East", "Pacific",
                                      "South Asia", "Southeast and East Asia"))
 
 a <- bar_data %>% filter(Region %in% c("Africa", "Americas", "Caribbean")) %>% 
-  ggplot(aes(x = mean_susceptibility, 
-             y = fct_reorder(COUNTRYNM, mean_susceptibility), 
+  ggplot(aes(x = mean_vax, 
+             y = fct_reorder(COUNTRYNM, mean_vax), 
              fill = Region)) +
   geom_col(alpha = 0.8) +
-  geom_errorbar(aes(xmin = min_admin1_susc, xmax = max_admin1_susc), 
+  geom_errorbar(aes(xmin = min_admin1_vax, xmax = max_admin1_vax), 
                 width = 0.5, col = "black") +
-  labs(x = "Percent susceptible", y = "Country") +
-  coord_cartesian(xlim = c(50, 100)) +
+  labs(x = "Percent vaccinated", y = "Country") +
+  coord_cartesian(xlim = c(5, 65)) +
   facet_grid(rows = vars(Region), scales = "free", space = "free") +
   # have to have scales free to not show each country in every region
   # have facet_grid so each is same width even though country name length varies
@@ -290,14 +411,14 @@ a <- bar_data %>% filter(Region %in% c("Africa", "Americas", "Caribbean")) %>%
   guides(fill = "none")
 
 b <- bar_data %>% filter(! Region %in% c("Africa", "Americas", "Caribbean")) %>% 
-  ggplot(aes(x = mean_susceptibility, 
-             y = fct_reorder(COUNTRYNM, mean_susceptibility), 
+  ggplot(aes(x = mean_vax, 
+             y = fct_reorder(COUNTRYNM, mean_vax), 
              fill = Region)) +
   geom_col(alpha = 0.8) +
-  geom_errorbar(aes(xmin = min_admin1_susc, xmax = max_admin1_susc), 
+  geom_errorbar(aes(xmin = min_admin1_vax, xmax = max_admin1_vax), 
                 width = 0.5, col = "black") +
-  labs(x = "Percent susceptible", y = "Country") +
-  coord_cartesian(xlim = c(50, 100)) +
+  labs(x = "Percent vaccinated", y = "Country") +
+  coord_cartesian(xlim = c(5, 65)) +
   facet_grid(rows = vars(Region), scales = "free", space = "free") +
   # have to have scales free to not show each country in every region
   # have facet_grid so each is same width even though country name length varies
@@ -310,337 +431,219 @@ b <- bar_data %>% filter(! Region %in% c("Africa", "Americas", "Caribbean")) %>%
   guides(fill = "none")
 
 ggarrange(a, b, ncol = 2)
-ggsave("figures/grouped-barplot-twocol.pdf", height = 16, width = 16)
+ggsave("figures/grouped-barplot-twocol.pdf", height = 20, width = 16)
 
-### COUNTERFACTUAL PLOTS
-# us no immigration
-us_estimates <- read_csv("estimates/us.csv")
-no_immigration <- main_us_function(data_to_use = pums_data, is_diff_age_dist = FALSE,
-                                   for_world_map = FALSE, is_100_covg = FALSE,
-                                   is_1984_end = FALSE, waning = 0.807, 
-                                   no_immigration = TRUE, 
-                                   cess_cvg_data = cessation_coverage_data)
-no_im_diff <- no_immigration %>% rename(perc_susceptible_no_im = perc_susceptible,
-                                    pop_size_no_im = pop_size) %>% 
-  left_join(us_estimates, by = c("PUMA", "ST")) %>% 
-  mutate(difference = perc_susceptible_no_im - perc_susceptible)
-write_csv(no_im_diff, "estimates/no-immigration-counterfactual.csv")
-fig3d <- map_us(no_im_diff, do_plot_difference = TRUE, var_to_plot = "difference",
-                legend_title = "Difference in population susceptibility (% of popn)",
-                palette = "Hiroshige", lower = -35, upper = 35,
-                show_legend = FALSE) # just took max
-
-state_protection <- us_estimates %>% group_by(ST) %>% 
-  summarise(mean_protection = mean(prop_protected))
-
-
+########################################################################
+### COUNTERFACTUAL MAPS ################################################
+########################################################################
 # 1984 vax cessation
-cess_1984 <- main_function(other_age_data = NA, is_diff_age_dist = FALSE, 
-                           is_world_age_dist = FALSE, is_100_covg = FALSE,
-                           is_1984_end = TRUE, waning = 0.807, 
-                           include_natural_immunity = FALSE, 
-                           is_bootstrap = FALSE) 
-cess_1984_diff <- cess_1984 %>% rename(perc_susceptible_1984 = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_1984) %>% 
+cess_1984 <- calc_admin1_perc_vaxxed(vaxxed_by_age = calc_prop_vaxxed(other_age_data = NA,
+                                                                      is_diff_age_dist = FALSE,
+                                                                      is_world_age_dist = FALSE,
+                                                                      is_100_covg = FALSE,
+                                                                      is_1984_end = TRUE,
+                                                                      is_bootstrap = FALSE),
+                                     is_world_age_dist = FALSE,
+                                     is_diff_age_dist = FALSE,
+                                     is_100_covg = FALSE,
+                                     is_1984_end = TRUE,
+                                     is_bootstrap = FALSE) 
+cess_1984_diff <- cess_1984 %>% rename(perc_vaxxed_1984 = perc_vaxxed) %>% 
+  select(ISOALPHA, COUNTRYNM, NAME1, perc_vaxxed_1984) %>% 
   left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_1984 - perc_susceptible)
-write_csv(cess_1984_diff, "estimates/cessation-1984-counterfactual.csv")
-fig3a <- map_main(cess_1984,
+  mutate(diff = perc_vaxxed_1984 - perc_vaxxed)
+write_csv(cess_1984_diff, "estimates/vaxxed-cessation-1984-counterfactual.csv")
+cess_1984_diff <- read_csv("estimates/vaxxed-cessation-1984-counterfactual.csv")
+fig2a <- map_ests(join_shape_data(cess_1984, 
+                                  do_plot_difference = TRUE,
+                                  diff_comparison_path = "estimates/vaxxed-world.csv"),
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
-                  legend_title = "Difference in population susceptibility (% of popn)", 
-                  lower = -35, upper = 35, palette = "Hiroshige",
-                  show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = "estimates/world.csv")
+                  legend_title = "Difference in population vaccination coverage (% of popn)", 
+                  lower = -45, upper = 45, palette = "Hiroshige",
+                  show_legend = FALSE, wide_legend = TRUE)
 
 # 100% scar coverage
-covg_100 <- main_function(other_age_data = NA, is_diff_age_dist = FALSE, 
-                          is_world_age_dist = FALSE, is_100_covg = TRUE,
-                          is_1984_end = FALSE, waning = 0.807, 
-                          include_natural_immunity = FALSE, 
-                          is_bootstrap = FALSE) 
-covg_100_diff <- covg_100 %>% rename(perc_susceptible_100 = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_100) %>% 
+covg_100 <- calc_admin1_perc_vaxxed(vaxxed_by_age = calc_prop_vaxxed(other_age_data = NA,
+                                                                     is_diff_age_dist = FALSE,
+                                                                     is_world_age_dist = FALSE,
+                                                                     is_100_covg = TRUE,
+                                                                     is_1984_end = FALSE,
+                                                                     is_bootstrap = FALSE),
+                                    is_world_age_dist = FALSE,
+                                    is_diff_age_dist = FALSE,
+                                    is_100_covg = TRUE,
+                                    is_1984_end = FALSE,
+                                    is_bootstrap = FALSE) 
+covg_100_diff <- covg_100 %>% rename(perc_vaxxed_100 = perc_vaxxed) %>% 
+  select(ISOALPHA, COUNTRYNM, NAME1, perc_vaxxed_100) %>% 
   left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_100 - perc_susceptible)
-write_csv(covg_100_diff, "estimates/coverage-100-counterfactual.csv")
-fig3b <- map_main(covg_100,
+  mutate(diff = perc_vaxxed_100 - perc_vaxxed)
+write_csv(covg_100_diff, "estimates/vaxxed-coverage-100-counterfactual.csv")
+covg_100_diff <- read_csv("estimates/vaxxed-coverage-100-counterfactual.csv")
+fig2b <- map_ests(join_shape_data(covg_100, 
+                                  do_plot_difference = TRUE,
+                                  diff_comparison_path = "estimates/vaxxed-world.csv"),
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
-                  legend_title = "Difference in population susceptibility (% of popn)", 
-                  lower = -35, upper = 35, palette = "Hiroshige",
-                  show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = "estimates/world.csv")
+                  legend_title = "Difference in population vaccination (% of popn)", 
+                  lower = -45, upper = 45, palette = "Hiroshige",
+                  show_legend = FALSE, wide_legend = TRUE)
 
 # world age distribution 
-world_same <- main_function(other_age_data = world_age_dist, 
-                            is_diff_age_dist = TRUE, 
-                            is_world_age_dist = TRUE, is_100_covg = FALSE,
-                            is_1984_end = FALSE, waning = 0.807, 
-                            include_natural_immunity = FALSE, 
-                            is_bootstrap = FALSE) 
-world_same_diff <- world_same %>% rename(perc_susceptible_world = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_world) %>% 
+world_same <- calc_admin1_perc_vaxxed(vaxxed_by_age = calc_prop_vaxxed(other_age_data = world_age_dist,
+                                                                       is_diff_age_dist = TRUE,
+                                                                       is_world_age_dist = TRUE,
+                                                                       is_100_covg = FALSE,
+                                                                       is_1984_end = FALSE,
+                                                                       is_bootstrap = FALSE),
+                                      is_world_age_dist = TRUE,
+                                      is_diff_age_dist = TRUE,
+                                      is_100_covg = FALSE,
+                                      is_1984_end = TRUE,
+                                      is_bootstrap = FALSE) 
+world_same_diff <- world_same %>% rename(perc_vaxxed_world = perc_vaxxed) %>% 
+  select(ISOALPHA, COUNTRYNM, NAME1, perc_vaxxed_world) %>% 
   left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_world - perc_susceptible)
-write_csv(world_same_diff, "estimates/world-age-dist-counterfactual.csv")
-fig3c <- map_main(world_same,
+  mutate(diff = perc_vaxxed_world - perc_vaxxed)
+write_csv(world_same_diff, "estimates/vaxxed-world-age-dist-counterfactual.csv")
+fig2c <- map_ests(join_shape_data(world_same, 
+                                  do_plot_difference = TRUE,
+                                  diff_comparison_path = "estimates/vaxxed-world.csv"),
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
-                  legend_title = "Difference in population susceptibility (% of popn)", 
-                  lower = -35, upper = 35, palette = "Hiroshige",
-                  show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = "estimates/world.csv")
+                  legend_title = "Difference in population vaccination (% of popn)", 
+                  lower = -45, upper = 45, palette = "Hiroshige",
+                  show_legend = TRUE, wide_legend = TRUE)
 
-ggarrange(fig3a, fig3b, fig3c, fig3d, ncol = 2, nrow = 2, labels = "AUTO",
-          common.legend = TRUE, legend = "bottom",
-          font.label = list(size = 30))
+ggarrange(
+  ggarrange(fig2a, fig2b,
+            ncol = 2, nrow = 1, labels = "AUTO", font.label = list(size = 30)), 
+  fig2c, 
+  ncol = 1, nrow = 2, labels = "AUTO", common.legend = TRUE, 
+  legend = "bottom", font.label = list(size = 30))
 # +
 #   inset_element(fig3_legend, left = 0, bottom = 0.45, right = 0.15, top = 0.8,
 #                 align_to = "full", on_top = T)
-ggsave("figures/fig3.pdf", height = 8, width = 16, dpi = 600)
-ggsave("figures/fig3.png", height = 8, width = 16, dpi = 600)
+
+ggsave("figures/fig2.pdf", height = 8, width = 16, dpi = 600)
 dev.off()
+rm(fig2a, fig2b, fig2c)
 
-
+########################################################################
+### SUPPLEMENT COUNTERFACTUAL MAPS #####################################
+########################################################################
 # national age distribution 
-national_same <- main_function(other_age_data = national_age_dist, 
-                               is_diff_age_dist = TRUE, 
-                               is_world_age_dist = FALSE, is_100_covg = FALSE,
-                               is_1984_end = FALSE, waning = 0.807, 
-                               include_natural_immunity = FALSE, 
-                               is_bootstrap = FALSE) 
-national_same_diff <- national_same %>% rename(perc_susceptible_national = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_national) %>% 
+# changing this to use UN age data instead of whatever aggregation I did previously
+
+# IF USE UN DATA NEED TO REMOVE COUNTRYNM FROM JOIN IN CALC_IMMUNITY_SPLIT.R
+national_same <- calc_admin1_perc_vaxxed(vaxxed_by_age = calc_prop_vaxxed(other_age_data = national_age_dist,
+                                                                          is_diff_age_dist = TRUE,
+                                                                          is_world_age_dist = FALSE,
+                                                                          is_100_covg = FALSE,
+                                                                          is_1984_end = FALSE,
+                                                                          is_bootstrap = FALSE),
+                                         is_world_age_dist = FALSE,
+                                         is_diff_age_dist = TRUE,
+                                         is_100_covg = FALSE,
+                                         is_1984_end = TRUE,
+                                         is_bootstrap = FALSE) 
+national_same_diff <- national_same %>% rename(perc_vaxxed_national = perc_vaxxed) %>% 
+  select(ISOALPHA, COUNTRYNM, NAME1, perc_vaxxed_national) %>% 
   left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_national - perc_susceptible)
-write_csv(national_same_diff, "estimates/national-age-dist-counterfactual.csv")
-figs1 <- map_main(national_same,
+  mutate(diff = perc_vaxxed_national - perc_vaxxed)
+write_csv(national_same_diff, "estimates/vaxxed-national-age-dist-counterfactual.csv")
+figs1 <- map_ests(join_shape_data(national_same, 
+                                  do_plot_difference = TRUE,
+                                  diff_comparison_path = "estimates/vaxxed-world.csv"),
                   do_plot_difference = TRUE, 
                   var_to_plot = "difference",
-                  legend_title = "Difference in\npopulation\nsusceptibility\n(% of popn)", 
-                  lower = -35, upper = 35, palette = "Hiroshige",
-                  show_legend = TRUE, wide_legend = FALSE,
-                  diff_comparison_path = "estimates/world.csv")
+                  legend_title = "Difference in\npopulation vaccination\n(% of popn)", 
+                  lower = -45, upper = 45, palette = "Hiroshige",
+                  show_legend = TRUE, wide_legend = FALSE)
 
 figs1
+#ggsave("figures/national-age-distribution.pdf", height = 4, width = 8, dpi = 600)
 ggsave("figures/national-age-distribution.pdf", height = 4, width = 8, dpi = 600)
-ggsave("figures/national-age-distribution.png", height = 4, width = 8, dpi = 600)
 dev.off()
 rm(figs1)
 
-# natural immunity
-nat_imm <- main_function(other_age_data = NA,
-                         is_diff_age_dist = FALSE, is_world_age_dist = FALSE,
-                         is_100_covg = FALSE, is_1984_end = FALSE, 
-                         waning = 0.807, include_natural_immunity = TRUE, 
-                         is_bootstrap = FALSE)
-natural_immunity_diff <- nat_imm %>% rename(perc_susceptible_natimm = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_natimm) %>% 
-  left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_natimm - perc_susceptible)
-write_csv(natural_immunity_diff, "estimates/natural-immunity-sensitivity.csv")
-figs2 <- map_main(nat_imm,
-                  do_plot_difference = TRUE, 
-                  var_to_plot = "difference",
-                  legend_title = "Difference in\npopulation\nsusceptibility\n(% of popn)", 
-                  lower = -35, upper = 35, palette = "Hiroshige",
-                  show_legend = TRUE, wide_legend = FALSE,
-                  diff_comparison_path = "estimates/world.csv")
-
-figs2zoom <- map_main(nat_imm,
-                      do_plot_difference = TRUE, 
-                      var_to_plot = "difference",
-                      legend_title = "Difference in\npopulation\nsusceptibility\n(% of popn)", 
-                      lower = NA, upper = NA, palette = "Hiroshige",
-                      show_legend = TRUE, wide_legend = FALSE,
-                      diff_comparison_path = "estimates/world.csv")
-
-ggarrange(figs2, figs2zoom, ncol = 1, labels = "AUTO", font.label = list(size = 30))
-ggsave("figures/nat_immunity.pdf", height = 6, width = 8, dpi = 600)
-ggsave("figures/nat_immunity.png", height = 6, width = 8, dpi = 600)
-dev.off()
-rm(figs2)
-rm(figs2zoom)
-
-# waning/cross-immunity sensitivity analyses
-effectiveness <- main_function(other_age_data = NA,
-                               is_diff_age_dist = FALSE, is_world_age_dist = FALSE,
-                               is_100_covg = FALSE, is_1984_end = FALSE, 
-                               waning = 0.756, include_natural_immunity = FALSE, 
-                               is_bootstrap = FALSE)
-effectiveness_diff <- effectiveness %>% rename(perc_susceptible_eff = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_eff) %>% 
-  left_join(main_estimates, by = c("ISOALPHA", "COUNTRYNM", "NAME1")) %>% 
-  mutate(diff = perc_susceptible_eff - perc_susceptible)
-write_csv(effectiveness_diff, "estimates/effective-75.6-sensitivity.csv")
-effectiveness_fig <- map_main(effectiveness,
-                              do_plot_difference = TRUE, 
-                              var_to_plot = "difference",
-                              legend_title = "Difference in population susceptibility (% of popn)", 
-                              lower = -35, upper = 35, palette = "Hiroshige",
-                              show_legend = TRUE, wide_legend = TRUE,
-                              diff_comparison_path = "estimates/world.csv")
-
-no_waning <- main_function(other_age_data = NA,
-                           is_diff_age_dist = FALSE, is_world_age_dist = FALSE,
-                           is_100_covg = FALSE, is_1984_end = FALSE, 
-                           waning = 0.85, include_natural_immunity = FALSE, 
-                           is_bootstrap = FALSE)
-no_diff <- no_waning %>% rename(perc_susceptible_no = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_no) %>% 
-  left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_no - perc_susceptible)
-write_csv(no_diff, "estimates/effective-85-sensitivity.csv")
-no_waning_fig <- map_main(no_waning,
-                          do_plot_difference = TRUE, 
-                          var_to_plot = "difference",
-                          legend_title = "Difference in population susceptibility (% of popn)", 
-                          lower = -35, upper = 35, palette = "Hiroshige",
-                          show_legend = TRUE, wide_legend = TRUE,
-                          diff_comparison_path = "estimates/world.csv")
-
-ggarrange(effectiveness_fig, no_waning_fig,
-          ncol = 2, nrow = 1, labels = "AUTO", font.label = list(size = 30),
-          common.legend = TRUE, legend = "bottom")
-ggsave("figures/waning-efficacy.pdf", height = 4, width = 16, dpi = 600)
-ggsave("figures/waning-efficacy.png", height = 4, width = 16, dpi = 600)
-dev.off()
-
-variola_major <- main_function(other_age_data = NA,
-                               is_diff_age_dist = FALSE, is_world_age_dist = FALSE,
-                               is_100_covg = FALSE, is_1984_end = FALSE, 
-                               waning = 0.911, include_natural_immunity = FALSE, 
-                               is_bootstrap = FALSE)
-write_csv(variola_major %>% select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible), 
-          "estimates/variola-major-sensitivity.csv")
-major_diff <- variola_major %>% rename(perc_susceptible_maj = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_maj) %>% 
-  left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_maj - perc_susceptible)
-variola_major_fig <- map_main(variola_major,
-                              do_plot_difference = FALSE, 
-                              var_to_plot = "perc_susceptible",
-                              legend_title = "Population susceptibility (% of popn)", 
-                              lower = 45, upper = 100, palette = "VanGogh3",
-                              show_legend = TRUE, wide_legend = TRUE,
-                              diff_comparison_path = NA)
-
-variola_minor <- main_function(other_age_data = NA,
-                               is_diff_age_dist = FALSE, is_world_age_dist = FALSE,
-                               is_100_covg = FALSE, is_1984_end = FALSE, 
-                               waning = 0.749, include_natural_immunity = FALSE, 
-                               is_bootstrap = FALSE)
-write_csv(variola_minor %>% select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible), 
-          "estimates/variola-minor-sensitivity.csv")
-minor_diff <- variola_minor %>% rename(perc_susceptible_min = perc_susceptible) %>% 
-  select(ISOALPHA, COUNTRYNM, NAME1, perc_susceptible_min) %>% 
-  left_join(main_estimates) %>% 
-  mutate(diff = perc_susceptible_min - perc_susceptible)
-variola_minor_fig <- map_main(variola_minor,
-                              do_plot_difference = FALSE, 
-                              var_to_plot = "perc_susceptible",
-                              legend_title = "Population susceptibility (% of popn)", 
-                              lower = 45, upper = 100, palette = "VanGogh3",
-                              show_legend = TRUE, wide_legend = TRUE,
-                              diff_comparison_path = NA)
 
 
-ggarrange(variola_major_fig, variola_minor_fig,
-          ncol = 2, nrow = 1, labels = "AUTO", font.label = list(size = 30),
-          common.legend = TRUE, legend = "bottom")
-ggsave("figures/variolas.pdf", height = 4, width = 16, dpi = 600)
-ggsave("figures/variolas.png", height = 4, width = 16, dpi = 600)
-dev.off()
+########################################################################
+### DATA QUALITY #######################################################
+########################################################################
+# cessation data and coverage are at the national level, so use world shapefiles
+World <- ne_countries(returnclass = "sf")
+data_quality <- World %>% 
+  left_join(cessation_coverage_data %>% # basically just losing small island nations in this join
+              filter(!is.na(ISO)), # kosovo, somaliland, and northern cyprus don't have iso3 codes in World
+            by = c("iso_a3" = "ISO"))
+  
+cessation_grade <- data_quality %>% 
+  ggplot(aes(fill = cessation_data_quality)) + 
+  geom_sf(size = 0.05) + 
+  coord_sf() +
+  scale_fill_manual(values = natparks.pals("Acadia", 4), na.value = "white") +
+  labs(fill = "Data quality") +
+  theme(legend.title = element_text(size = 20),
+        legend.text = element_text(size = 15))
+    
+coverage_grade <- data_quality %>% 
+  ggplot(aes(fill = cvg_data_quality)) + 
+  geom_sf(size = 0.05) + 
+  coord_sf() +
+  scale_fill_manual(values = natparks.pals("Acadia", 4), na.value = "white") +
+  labs(fill = "Data quality") +
+  theme(legend.title = element_text(size = 20),
+        legend.text = element_text(size = 15))
 
-### uncertainty analysis
-uncertainty_estimates <- read_csv("data/bootstrapped_estimates_5000_musig.csv")
-avg_diff <- uncertainty_estimates %>% 
-  left_join(main_estimates) %>% 
-  mutate(diff = mu - perc_susceptible)
-write_csv(avg_diff, "estimates/uncertainty-differences.csv")
-avg <- map_main(uncertainty_estimates %>% rename(perc_susceptible = mu),
-                do_plot_difference = TRUE, var_to_plot = "difference",
-                legend_title = "Difference in population\nsusceptibility (% of popn)",
-                lower = -35, upper = 35, palette = "Hiroshige",
-                show_legend = TRUE, wide_legend = TRUE,
-                diff_comparison_path = "estimates/world.csv") +
-  theme(legend.position = "bottom")
+ggarrange(cessation_grade, coverage_grade, labels = "AUTO", font.label = list(size = 30),
+          ncol = 1, nrow = 2, common.legend = TRUE, legend = "right")
+ggsave("figures/data-quality.pdf", width = 10, height = 8)
 
-stdev <- map_main(uncertainty_estimates,
-                  do_plot_difference = FALSE, var_to_plot = "sigma",
-                  legend_title = "Standard deviation in\npopulation susceptibility\n(% of popn)",
-                  lower = 0, upper = 4, palette = "Tam",
-                  show_legend = TRUE, wide_legend = TRUE,
-                  diff_comparison_path = NA) +
-  theme(legend.position = "bottom")
+# how many people in each grading category, versus number of countries
+data_quality_df <- cessation_coverage_data %>% 
+  filter(!is.na(ISO)) %>% 
+  filter(!is.na(cessation_data_quality)) %>% 
+  filter(!is.na(cvg_data_quality))
+num_countries <- nrow(data_quality_df)
+cvg_countries <- data_quality_df %>% 
+  group_by(cvg_data_quality) %>% 
+  summarise(count = n()/num_countries)
+sum(cvg_countries$count)
+cess_countries <- data_quality_df %>% 
+  group_by(cessation_data_quality) %>% 
+  summarise(count = n()/num_countries)
+sum(cess_countries$count)
 
-ggarrange(avg, stdev, ncol = 1, nrow = 2, labels = "AUTO", font.label = list(size = 30))
-ggsave("figures/bootstrap-fig.png", dpi = 600, height = 8, width = 10)
-ggsave("figures/bootstrap-fig.pdf", dpi = 600, height = 8, width = 10)
-dev.off()
+data_quality_pop_size <- main_estimates %>% group_by(ISOALPHA) %>% 
+  summarise(population = sum(tot_popn_2020)) %>% 
+  inner_join(data_quality_df, by = c("ISOALPHA" = "ISO")) %>% 
+  ungroup()
+world_pop <- sum(data_quality_pop_size$population)
+cvg_pop <- data_quality_pop_size %>%
+  group_by(cvg_data_quality) %>% 
+  summarise(people = sum(population)/world_pop)
+sum(cvg_pop$people)
+cess_pop <- data_quality_pop_size %>% 
+  group_by(cessation_data_quality) %>% 
+  summarise(people = sum(population)/world_pop)
+sum(cess_pop$people)
 
 ### checking us immigration differences
 
-immigrant_vs_not_vax <- pums_data %>% left_join(cessation_coverage_data, by = ("POBP")) %>% 
-  left_join(polio_proxy_coverage, by = c("POBP" = "fips_of_birth")) %>%
-  rowwise() %>% 
-  mutate(vax_stopped = ifelse(POBP < 60, 1972, vax_stopped), # set all US to 1972
-         Country = ifelse(POBP < 60, "USA", Country),
-         chance_vaxxed = ifelse(POBP >= 60, 
-                                calc_vax_coverage_foreign(birth_year, Survey_Year,
-                                                          vax_stopped, cvg_514_orig,
-                                                          cvg_over14_orig, cvg_tot_orig),
-                                ifelse(birth_year <= vax_stopped, spx_coverage, 0)),
-                                       # ifelse(!is.na(coverage), coverage, DEFAULT_COVERAGE),
-                                       # 0)),
-         foreign_born = ifelse(POBP < 100, 0, 1)) %>% # including US territories rn
-  group_by(foreign_born) %>% 
-  summarise(perc_susceptible = (1 - (weighted.mean(chance_vaxxed, PWGTP, na.rm = T) * 0.807)) * 100,
-            mean_age = weighted.mean(AGEP, PWGTP, na.rm = T))
-
-
-
-### playing with contours
-# library(akima)
-# # need to make a grid, see: https://stackoverflow.com/questions/65873211/empty-contour-plot-in-ggplot
-# scatter_data_grid <- scatter_data %>% # remove default 80% coverages
-#   filter(is_default_cvg == 0)
-# # had an issue where had duplicate (x,y) coordinates leading to same/different z (UK repeated)
-# grid <- akima::interp(scatter_data_grid$perc_born_before_1980_country, 
-#                       scatter_data_grid$overall_cvg_country,
-#                       scatter_data_grid$perc_susceptible)
-# griddf <- data.frame(x = rep(grid$x, ncol(grid$z)), 
-#                      y = rep(grid$y, each = nrow(grid$z)), 
-#                      z = as.numeric(grid$z))
-# c1 <- ggplot(data = griddf,
-#              aes(x = x,
-#                  y = y,
-#                  z = z)) + 
-#   geom_contour_filled(alpha = 0.8) + 
-#   scale_fill_viridis_d(drop = FALSE) +
-#   labs(x = "Percentage born before 1980", y = "Overall scar survey coverage",
-#        fill = "Percent susceptible") +
-#   theme(legend.position = "bottom")
-# 
-# # may want to add points: https://stackoverflow.com/questions/43268692/how-to-put-the-actual-data-points-on-the-contour-plot-with-ggplot
-# library(metR)
-# # from: https://eliocamp.github.io/codigo-r/en/2021/09/contour-labels/
-# c2 <- ggplot(data = griddf,
-#              aes(x = x,
-#                  y = y,
-#                  z = z)) + 
-#   geom_contour() +
-#   metR::geom_text_contour() + 
-#   geom_point(data = scatter_data_grid, aes(x = perc_born_before_1980_country,
-#                                            y = overall_cvg_country,
-#                                            z = perc_susceptible,
-#                                            colour = Region)) +
-#   labs(x = "Percentage born before 1980", y = "Overall scar survey coverage",
-#        fill = "Percent susceptible") +
-#   theme(legend.position = "bottom")
-# #scale_color_discrete(colors=met.brewer("Tam")) #gradientn
-# 
-# ggarrange(c2, c1, ncol = 2, labels = "AUTO")
-# ggsave("figures/contours.pdf", height = 5, width = 12)
-# 
+# immigrant_vs_not_vax <- pums_data %>% left_join(cessation_coverage_data, by = ("POBP")) %>% 
+#   left_join(polio_proxy_coverage, by = c("POBP" = "fips_of_birth")) %>%
+#   rowwise() %>% 
+#   mutate(vax_stopped = ifelse(POBP < 60, 1972, vax_stopped), # set all US to 1972
+#          Country = ifelse(POBP < 60, "USA", Country),
+#          chance_vaxxed = ifelse(POBP >= 60, 
+#                                 calc_vax_coverage_foreign(birth_year, Survey_Year,
+#                                                           vax_stopped, cvg_514_orig,
+#                                                           cvg_over14_orig, cvg_tot_orig),
+#                                 ifelse(birth_year <= vax_stopped, spx_coverage, 0)),
+#          foreign_born = ifelse(POBP < 100, 0, 1)) %>% # including US territories rn
+#   group_by(foreign_born) %>% 
+#   summarise(perc_vaxxed = weighted.mean(chance_vaxxed, PWGTP, na.rm = T) * 100,
+#             mean_age = weighted.mean(AGEP, PWGTP, na.rm = T))

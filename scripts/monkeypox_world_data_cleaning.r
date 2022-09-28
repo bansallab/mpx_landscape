@@ -9,36 +9,37 @@ library(sf)
 library(stringi)
 library(MetBrewer)
 
+# RUN US_GPW_DATA BEFORE THIS
+
 # skip to read in data_agg
 # data <- read_csv("data/gpw-v4-admin-unit-center-points-population-estimates-rev11_global_csv 2/gpw_v4_admin_unit_center_points_population_estimates_rev11_global.csv")
-
-# need to summarise to admin1 level, this may take a while
-# data_agg <- data %>% group_by(ISOALPHA, COUNTRYNM, NAME1) %>% 
-#   summarise(tot_popn_2020 = sum(UN_2020_E),
-#             tot_popn_2010 = sum(UN_2010_E),
-#             pop_change = tot_popn_2020/tot_popn_2010,
-#             A00_04B = as.integer(sum(A00_04B) * pop_change),
-#             A05_09B = as.integer(sum(A05_09B) * pop_change),
-#             A10_14B = as.integer(sum(A10_14B) * pop_change),
-#             A15_19B = as.integer(sum(A15_19B) * pop_change),
-#             A20_24B = as.integer(sum(A20_24B) * pop_change),
-#             A25_29B = as.integer(sum(A25_29B) * pop_change),
-#             A30_34B = as.integer(sum(A30_34B) * pop_change),
-#             A35_39B = as.integer(sum(A35_39B) * pop_change),
-#             A40_44B = as.integer(sum(A40_44B) * pop_change),
-#             A45_49B = as.integer(sum(A45_49B) * pop_change),
-#             A50_54B = as.integer(sum(A50_54B) * pop_change),
-#             A55_59B = as.integer(sum(A55_59B) * pop_change),
-#             A60_64B = as.integer(sum(A60_64B) * pop_change),
-#             A65_69B = as.integer(sum(A65_69B) * pop_change),
-#             A70_74B = as.integer(sum(A70_74B) * pop_change),
-#             A75_79B = as.integer(sum(A75_79B) * pop_change),
-#             A80_84B = as.integer(sum(A80_84B) * pop_change),
-#             A85PLUSB = as.integer(sum(A85PLUSB) * pop_change))
 # 
-# write_csv(data_agg, "world_agg_age_data_admin1_2020.csv")
+# # need to summarise to admin1 level, this may take a while 
+# data_agg <- data %>% group_by(ISOALPHA, COUNTRYNM, NAME1) %>%
+#   summarise(tot_popn_2010 = sum(UN_2010_E),
+#             tot_popn_2020 = sum(UN_2020_E),
+#             A00_04B = sum(A00_04B),
+#             A05_09B = sum(A05_09B),
+#             A10_14B = sum(A10_14B),
+#             A15_19B = sum(A15_19B),
+#             A20_24B = sum(A20_24B),
+#             A25_29B = sum(A25_29B),
+#             A30_34B = sum(A30_34B),
+#             A35_39B = sum(A35_39B),
+#             A40_44B = sum(A40_44B),
+#             A45_49B = sum(A45_49B),
+#             A50_54B = sum(A50_54B),
+#             A55_59B = sum(A55_59B),
+#             A60_64B = sum(A60_64B),
+#             A65_69B = sum(A65_69B),
+#             A70_74B = sum(A70_74B),
+#             A75_79B = sum(A75_79B),
+#             A80_84B = sum(A80_84B),
+#             A85PLUSB = sum(A85PLUSB))
+# 
+# write_csv(data_agg, "data/world_agg_age_data_admin1.csv")
 
-data_agg_orig <- read_csv("data/world_agg_age_data_admin1_2020.csv")
+data_agg_orig <- read_csv("data/world_agg_age_data_admin1.csv")
 clean_gpw <- function(admin1name){
   fix_1 <- gsub("[ ]region$|[ ]governorate$|[ ]administration$|[ ]gov.|^dpto.[ ]|[ ]district|[ ]territory|region[ ]de[ ]|district[ ]de[ ]|^bourough[ ]of[ ]|[ ]county$|[ ]province$|province[ ]de[ ]|province[ ]du[ ]|province[ ]de[ ]l[ ]|province[ ]de[ ]la[ ]|[ ]state$|region[ ]of[ ]|[ ]division|[ ]-[ ]metro[ ]city$|^raionul[ ]|^wilayah[ ]persekutuan[ ]|^region[ ]autonoma[ ]|^regiao[ ]autonoma[ ]da[ ]|^regiao[ ]autonoma[ ]dos[ ]|[ ]municipio$|[ ]oblast$|-ken$|'|`",
                 "", admin1name)
@@ -57,9 +58,11 @@ data_agg <- data_agg_orig %>% filter(tot_popn_2020 != 0) %>%
          NAME1 = trimws(clean_gpw(NAME1))) %>% 
   # need to strip white space
   distinct() %>% 
-  group_by(ISOALPHA, NAME1) %>%
+  # deal with duplicate admin1s with different populations, e.g., ile-de-france, and sum to get total popn
+  group_by(ISOALPHA, NAME1) %>% 
   summarise(COUNTRYNM = COUNTRYNM,
             NAME1 = NAME1,
+            tot_popn_2010 = sum(tot_popn_2010), 
             tot_popn_2020 = sum(tot_popn_2020), 
             A00_04B = sum(A00_04B), A05_09B = sum(A05_09B), A10_14B = sum(A10_14B),
             A15_19B = sum(A15_19B), A20_24B = sum(A20_24B), A25_29B = sum(A25_29B), 
@@ -69,11 +72,19 @@ data_agg <- data_agg_orig %>% filter(tot_popn_2020 != 0) %>%
             A75_79B = sum(A75_79B), A80_84B = sum(A80_84B), A85PLUSB = sum(A85PLUSB)) %>%
   ungroup() %>% 
   distinct() %>% 
-  mutate(admin_id = row_number()) %>% 
   filter(!is.na(NAME1)) %>% 
-  mutate(NAME1 = trimws(NAME1)) %>% # add version back below
+  mutate(NAME1 = trimws(NAME1), # add version back below
+         ISOALPHA = ifelse(ISOALPHA == "KOS", "XKO", ISOALPHA)) %>% # gadm has different kosovo isoalpha
   filter(NAME1 != "bikini") %>% # 1 person, old nuclear tests
-  select(ISOALPHA, COUNTRYNM, NAME1, admin_id, tot_popn_2020, contains("A")) # reordering columns
+  select(ISOALPHA, COUNTRYNM, NAME1, tot_popn_2010, tot_popn_2020, contains("A")) # reordering columns
+
+# these are summing to <1 and >1, less than 1 maybe cause small rounding but over 1 cause of some
+#   weird grouping
+
+# add US data
+us_data <- read_csv("data/cleaned_gpw_us_age_data.csv")
+data_agg <- data_agg %>% bind_rows(us_data) %>% 
+  mutate(admin_id = row_number())
 
 # fix gpw names from MANUAL comparison to gadm
 gpw_gadm_name_fix <- read_csv("data/gpw_to_gadm_country_join.csv")
@@ -81,9 +92,9 @@ data_agg_join <- data_agg %>% left_join(gpw_gadm_name_fix, by = c("ISOALPHA" = "
                                                                   "COUNTRYNM",
                                                                   "NAME1" = "original_gpw_name")) %>% 
   mutate(gadm_match = ifelse(is.na(updated_gpw_name), NAME1, updated_gpw_name)) %>%
-  group_by(gadm_match) %>% 
-  summarise(ISOALPHA = ISOALPHA,
-            COUNTRYNM = COUNTRYNM,
+  # need to summarise because multiple gpw now go to one gadm name, sum across all these
+  group_by(ISOALPHA, COUNTRYNM, gadm_match) %>% 
+  summarise(tot_popn_2010 = sum(tot_popn_2010),
             tot_popn_2020 = sum(tot_popn_2020), 
             A00_04B = sum(A00_04B), A05_09B = sum(A05_09B), A10_14B = sum(A10_14B),
             A15_19B = sum(A15_19B), A20_24B = sum(A20_24B), A25_29B = sum(A25_29B), 
@@ -94,9 +105,21 @@ data_agg_join <- data_agg %>% left_join(gpw_gadm_name_fix, by = c("ISOALPHA" = "
   ungroup() %>% 
   distinct() %>% 
   rename(NAME1 = gadm_match)
-  
 
-write_csv(data_agg_join, "data/cleaned_gpw_age_data.csv")
+# convert to proportions 09/06/22, use across here!!!
+data_agg_join_props <- data_agg_join %>% rowwise() %>% 
+  mutate(row_sum = sum(A00_04B, A05_09B, A10_14B, A15_19B, A20_24B, A25_29B, 
+                       A30_34B, A35_39B,A40_44B, A45_49B, A50_54B, A55_59B, 
+                       A60_64B, A65_69B, A70_74B, A75_79B, A80_84B, A85PLUSB),
+         A00_04B = A00_04B/row_sum, A05_09B = A05_09B/row_sum, A10_14B = A10_14B/row_sum,
+         A15_19B = A15_19B/row_sum, A20_24B = A20_24B/row_sum, A25_29B = A25_29B/row_sum, 
+         A30_34B = A30_34B/row_sum, A35_39B = A35_39B/row_sum, A40_44B = A40_44B/row_sum,
+         A45_49B = A45_49B/row_sum, A50_54B = A50_54B/row_sum, A55_59B = A55_59B/row_sum,
+         A60_64B = A60_64B/row_sum, A65_69B = A65_69B/row_sum, A70_74B = A70_74B/row_sum,
+         A75_79B = A75_79B/row_sum, A80_84B = A80_84B/row_sum, A85PLUSB = A85PLUSB/row_sum) %>% 
+  filter(row_sum != 0) # no age distribution available
+
+write_csv(data_agg_join_props, "data/cleaned_gpw_age_data_props.csv")
 
 
 ####
@@ -129,7 +152,7 @@ clean_gadm <- function(name){
   return(fix_2)
 }
 gadm_variations <- function(variation, letter, type){
-  if(is.na(variation)){
+  if(is.na(variation) | type == " "){
     return(NA)
   }else if(letter == "a"){
     return(paste0(variation, type))
@@ -149,15 +172,15 @@ gadm_variations <- function(variation, letter, type){
 gadm404_sep <- gadm404_nosf %>% 
   mutate(VARNAME_1 = ifelse(VARNAME_1 == " ", NA,  gsub(",", "|", VARNAME_1)),
          TYPE_1 = tolower(TYPE_1),
-         NAME_1 = clean_gadm(NAME_1)) %>% 
+         NAME_1 = trimws(clean_gadm(NAME_1))) %>% 
   separate(VARNAME_1, into = c("var1", "var2", "var3", "var4", "var5", "var6", "var7", "var8", "var9", "var10"),
            sep = "\\|") %>% 
-  rowwise() %>% 
-  mutate(var0typea = paste0(NAME_1, TYPE_1),
-         var0typeb = paste0(NAME_1, "-", TYPE_1),
-         var0typec = paste0(NAME_1, " ", TYPE_1),
-         var0typed = gsub(paste0("[ ]", TYPE_1), "", NAME_1),
-         var0typee = gsub("-", " ", NAME_1),
+  rowwise() %>% # only want to do this if TYPE_1 != " "
+  mutate(var0typea = ifelse(TYPE_1 == " " | is.na(TYPE_1), NA, paste0(NAME_1, TYPE_1)),
+         var0typeb = ifelse(TYPE_1 == " " | is.na(TYPE_1), NA, paste0(NAME_1, "-", TYPE_1)),
+         var0typec = ifelse(TYPE_1 == " " | is.na(TYPE_1), NA, paste0(NAME_1, " ", TYPE_1)),
+         var0typed = ifelse(TYPE_1 == " " | is.na(TYPE_1), NA, gsub(paste0("[ ]", TYPE_1), "", NAME_1)),
+         var0typee = ifelse(TYPE_1 == " " | is.na(TYPE_1), NA, gsub("-", " ", NAME_1)),
          var1typea = gadm_variations(var1, "a", TYPE_1),
          var1typeb = gadm_variations(var1, "b", TYPE_1),
          var1typec = gadm_variations(var1, "c", TYPE_1),
@@ -212,9 +235,20 @@ gadm404_sep <- gadm404_nosf %>%
 gadm404_long <- gadm404_sep %>% 
   pivot_longer(cols = c("NAME_1":"var10", "var0typea":"var10typee"),
                values_to = "admin1name", names_to = "version") %>% 
+  mutate(admin1name = trimws(clean_gadm(admin1name))) %>% # redo clean on variations
   filter(!is.na(admin1name)) %>% 
-  mutate(version = ifelse(version == "NAME_1", "original", "var")) %>% #select(-version) %>% 
-  distinct() # accent clearing can lead to duplicate rows
+  mutate(version = ifelse(version == "NAME_1", "original", "var")) %>% 
+  filter(! is.na(ISO), ISO != "NA") %>% 
+  distinct(OBJECTID, ISO, NAME_0, admin1name, .keep_all = TRUE) # accent clearing can lead to duplicate rows
+  
 
 write_csv(gadm404_long, "data/cleaned_gadm_data_noshapefile.csv")
 
+
+# 
+# > gadm_longjoin$NAME1[duplicated(gadm_longjoin)]
+# [1] "ali sabieh"   "arta"         "dikhil"      
+# [4] "djiboutii"    "obock"        "tadjoura"    
+# [7] "rift valley"  "antananarivo" "antsiranana" 
+# [10] "fianarantsoa" "mahajanga"    "toamasina"   
+# [13] "toliary"  

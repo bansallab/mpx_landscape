@@ -6,6 +6,72 @@
 library(tidyverse)
 library(tidylog)
 
+### new version using UN data from 2020
+
+# national age distributions
+# from: https://population.un.org/wpp/Download/Standard/Population/
+# had to convert to csv manually, hopefully didn't lose info?
+un_data <- read_csv("data/WPP2022_POP_F02_1_POPULATION_5-YEAR_AGE_GROUPS_BOTH_SEXES copy.csv") %>% 
+  filter(Year == 2020, ! is.na(`ISO3 Alpha-code`)) %>% 
+  rename(ISO = `ISO3 Alpha-code`, COUNTRYNM = `Region, subregion, country or area *`) %>% 
+  rowwise() %>% 
+  mutate(across(`0-4`:`100+`, ~ as.numeric(gsub(" ", "", .x)) * 1000)) %>%  # because data is in thousands
+  rename(A00_04B = `0-4`, A05_09B = `5-9`, A10_14B = `10-14`, A15_19B = `15-19`,
+         A20_24B = `20-24`, A25_29B = `25-29`, A30_34B = `30-34`, A35_39B = `35-39`,
+         A40_44B = `40-44`, A45_49B = `45-49`, A50_54B = `50-54`, A55_59B = `55-59`,
+         A60_64B = `60-64`, A65_69B = `65-69`, A70_74B = `70-74`, A75_79B = `75-79`,
+         A80_84B = `80-84`) %>% 
+  rowwise() %>% 
+  mutate(A85PLUSB = sum(`85-89`, `90-94`, `95-99`, `100+`, na.rm = T)) %>% 
+  select(-c(`85-89`, `90-94`, `95-99`, `100+`)) %>% 
+  # now convert to proportions
+  rowwise() %>% 
+  mutate(row_sum = sum(A00_04B, A05_09B, A10_14B, A15_19B, A20_24B, A25_29B, 
+                       A30_34B, A35_39B,A40_44B, A45_49B, A50_54B, A55_59B, 
+                       A60_64B, A65_69B, A70_74B, A75_79B, A80_84B, A85PLUSB),
+         A00_04B = A00_04B/row_sum, A05_09B = A05_09B/row_sum, A10_14B = A10_14B/row_sum,
+         A15_19B = A15_19B/row_sum, A20_24B = A20_24B/row_sum, A25_29B = A25_29B/row_sum, 
+         A30_34B = A30_34B/row_sum, A35_39B = A35_39B/row_sum, A40_44B = A40_44B/row_sum,
+         A45_49B = A45_49B/row_sum, A50_54B = A50_54B/row_sum, A55_59B = A55_59B/row_sum,
+         A60_64B = A60_64B/row_sum, A65_69B = A65_69B/row_sum, A70_74B = A70_74B/row_sum,
+         A75_79B = A75_79B/row_sum, A80_84B = A80_84B/row_sum, A85PLUSB = A85PLUSB/row_sum) %>% 
+  pivot_longer(cols = c(A00_04B:A85PLUSB), names_to = "age", values_to = "age_dist") %>% 
+  select(ISO, row_sum, age, age_dist) %>% 
+  mutate(ISO = ifelse(ISO == "XKX", "XKO", ISO)) %>% # fix kosovo
+  rename(ISOALPHA = ISO)
+
+write_csv(un_data, "data/un_national_age_dist.csv")
+
+# world age distribution
+un_data2 <- read_csv("data/WPP2022_POP_F02_1_POPULATION_5-YEAR_AGE_GROUPS_BOTH_SEXES copy.csv") %>% 
+  filter(Year == 2020, ! is.na(`ISO3 Alpha-code`)) %>% 
+  rename(ISO = `ISO3 Alpha-code`, COUNTRYNM = `Region, subregion, country or area *`) %>% 
+  rowwise() %>% 
+  mutate(across(`0-4`:`100+`, ~ as.numeric(gsub(" ", "", .x)) * 1000)) %>%  # because data is in thousands
+  rename(A00_04B = `0-4`, A05_09B = `5-9`, A10_14B = `10-14`, A15_19B = `15-19`,
+         A20_24B = `20-24`, A25_29B = `25-29`, A30_34B = `30-34`, A35_39B = `35-39`,
+         A40_44B = `40-44`, A45_49B = `45-49`, A50_54B = `50-54`, A55_59B = `55-59`,
+         A60_64B = `60-64`, A65_69B = `65-69`, A70_74B = `70-74`, A75_79B = `75-79`,
+         A80_84B = `80-84`) %>% 
+  rowwise() %>% 
+  mutate(A85PLUSB = sum(`85-89`, `90-94`, `95-99`, `100+`, na.rm = T)) %>% 
+  select(-c(`85-89`, `90-94`, `95-99`, `100+`)) %>% ungroup() %>% 
+  summarise(A00_04B = sum(A00_04B), A05_09B = sum(A05_09B), A10_14B = sum(A10_14B),
+            A15_19B = sum(A15_19B), A20_24B = sum(A20_24B), A25_29B = sum(A25_29B), 
+            A30_34B = sum(A30_34B),  A35_39B = sum(A35_39B), A40_44B = sum(A40_44B),
+            A45_49B = sum(A45_49B), A50_54B = sum(A50_54B), A55_59B = sum(A55_59B),
+            A60_64B = sum(A60_64B), A65_69B = sum(A65_69B), A70_74B = sum(A70_74B),
+            A75_79B = sum(A75_79B), A80_84B = sum(A80_84B), A85PLUSB = sum(A85PLUSB)) %>% 
+  mutate(total_pop = sum(A00_04B, A05_09B, A10_14B, A15_19B, A20_24B, A25_29B, 
+                         A30_34B, A35_39B,A40_44B, A45_49B, A50_54B, A55_59B, 
+                         A60_64B, A65_69B, A70_74B, A75_79B, A80_84B, A85PLUSB)) %>% 
+  mutate(across(starts_with("A"), ~ .x/total_pop)) %>% 
+  pivot_longer(cols = starts_with("A"), names_to = "age", values_to = "age_dist")
+  
+write_csv(un_data2, "data/un_world_age_dist.csv")
+
+### old version
+
 # read in age data
 gpw <- read_csv("data/cleaned_gpw_age_data.csv")
 pums_data <- read_csv("data/extracted_pums_2019data_age_birthplace_weights_region.csv") %>% 

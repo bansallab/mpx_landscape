@@ -16,9 +16,10 @@ We hope for this to be a living database, with updated historical and future dat
 
 ## Estimates (`estimates/`)
 Pre-run analyses and estimates that can be used by others without re-running the code. 
-* `vaxxed-world.csv` contains percentage vaccinated estimates at the admin-1 level
-* `vaxxed-us-pumas.csv` contains percentage vaccinated estimates at the PUMAs level in the U.S.
 * `uncertainty-differences.csv` contains mean percentage vaccinated estimates and standard deviations from our parametric bootstrapping uncertainty analysis
+* `vaxxed-us-pumas.csv` contains percentage vaccinated estimates at the PUMAs level in the U.S.
+* `vaxxed-world-by-country.csv` contains percentage vaccinated estimates at the country level
+* `vaxxed-world.csv` contains percentage vaccinated estimates at the admin-1 level
 
 
 ## Data (`data/`)
@@ -33,7 +34,7 @@ Inputs for data analysis can be found in this folder, outputs from running the c
 * `natural_immunity.csv` contains case count data from Fenner et al.
 * `pock_survey_coverage.csv` contains pock mark survey data
 * `polio95_3dose_states.csv` contains coverage estimates for 3 dose polio vaccination in the U.S. at the state level, used to add spatial heterogeneity to national smallpox vaccination coverage in U.S.
-* `state_fips.csv` helps converting PUMAs level estimates in the U.S. to the state-level
+* `state_fips.csv` helps converting PUMAs level estimates in the U.S. to the state level
 * `WPP2022_POP_F02_1_POPULATION_5-YEAR_AGE_GROUPS_BOTH_SEXES copy.csv` is a converted version of UN age distribution data in 5-year age groups with both sexes from: https://population.un.org/wpp/Download/Standard/Population/
 
 The files below are quite large and will be added in the future. To access immediately, you can download from the respective websites.
@@ -44,8 +45,8 @@ The files below are quite large and will be added in the future. To access immed
 ## Code (`scripts/`)
 Scripts to prepare demography data, join mapping data, calculate the proportion of a population vaccinated, calculate world and national age distributions, and calculate the landscape of orthopoxvirus susceptibility can be found in this folder.
 * `admin1_avg_age.r` calculates the average age for each admin-1, maps it, and calculates the global average age
-* `age_dist_comparison.r` compares aggregated GPW 2010 age distribution data with 2020 UN country-level age distribution data
-* `calc_immunity_split.r` contains the functions to calculate the percent *vaccinated* at the admin-1-level across all age groups or at the country-level for each age group
+* `age_dist_comparison.r` compares aggregated GPW 2010 age distribution data with 2020 UN country level age distribution data
+* `calc_immunity_split.r` contains the functions to calculate the percent *vaccinated* at the admin-1 level across all age groups or at the country level for each age group
 * `calc_immunity_us.r` contains the functions to calculate the percent *vaccinated* at the PUMAs level in the U.S.
 * `draw_maps.r` contains the functions to map global admin-1 level data
 * `global_susceptibility_profile.r` calculates and plots susceptibility profiles for each country, and produces Figure 3 with four case studies with various vaccine effectiveness and waning rates

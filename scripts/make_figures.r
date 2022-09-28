@@ -37,7 +37,7 @@ national_values <- main_estimates %>% group_by(ISOALPHA, COUNTRYNM) %>%
   ungroup() %>% 
   mutate(across(c(mean_vax, overall_cvg, perc_born_before_cessation),
                 ~ ifelse(is.nan(.x), NA_real_, .x))) # replace NaN with NA
-# write_csv(national_values, "estimates/world-by-country.csv")
+# write_csv(national_values, "estimates/vaxxed-world-by-country.csv")
 # post-hoc fix to include regions without rerunning right now
 state_values <- main_estimates %>% filter(ISOALPHA == "USA") %>%
   left_join((state_fips %>% select(state, fips)), by = c("NAME1" = "state")) %>%

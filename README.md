@@ -8,7 +8,7 @@ To rerun the analysis and reproduce the figures, start by opening `mpx_landscape
 We hope for this to be a living database, with updated historical and future data on vaccination, and invite the global health community to contribute. (We'll add details on how you can contribute soon. In the meantime, please reach out at shweta.bansal@georgetown.edu with any data you would like to share). 
 
 ## Supplementary data
-* `TableS1.csv` contains smallpox vaccination coverage and cessation estimates, lower and upper bounds, and sources for values used in our analyses. We anticipate this resource will change as more historical data become available. The grading scheme for vaccination cessation and coverage data is as follows:
+* `TableS1.csv` contains smallpox vaccination coverage and cessation estimates, lower and upper bounds, and sources for values used in our analyses. We anticipate this resource will change as more historical data become available. The *non-updated* version used in our analyses, `cessation_coverage_estimates.csv`, can be found in the data folder. The grading scheme for vaccination cessation and coverage data is as follows:
   * **A.** Good evidence (e.g., known scar/serum survey; known cessation date from literature)
   * **B.** Some evidence (e.g., vaccination coverage estimate mentioned in text or model without known scar/serum survey data; cessation date range)
   * **C.** No direct evidence, use country-specific assumptions (e.g., average of coverage estimates from neighboring countries; only one known bound (high or low) for cessation date)

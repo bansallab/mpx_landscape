@@ -8,7 +8,7 @@ To rerun the analysis and reproduce the figures, start by opening `mpx_landscape
 We hope for this to be a living database, with updated historical and future data on vaccination, and invite the global health community to contribute. (We'll add details on how you can contribute soon. In the meantime, please reach out at shweta.bansal@georgetown.edu with any data you would like to share). 
 
 ## Supplementary data
-* `TableS1.csv` contains smallpox vaccination coverage and cessation estimates, lower and upper bounds, and sources for values used in our analyses. We anticipate this resource will change as more historical data become available. The grading scheme for vaccination cessation and coverage data is as follows:
+* `latest_cessation_coverage_estimates.csv` contains smallpox vaccination coverage and cessation estimates, lower and upper bounds, and sources for values used in our analyses. We anticipate this resource will change as more historical data become available. The grading scheme for vaccination cessation and coverage data is as follows:
   * **A.** Good evidence (e.g., known scar/serum survey; known cessation date from literature)
   * **B.** Some evidence (e.g., vaccination coverage estimate mentioned in text or model without known scar/serum survey data; cessation date range)
   * **C.** No direct evidence, use country-specific assumptions (e.g., average of coverage estimates from neighboring countries; only one known bound (high or low) for cessation date)
@@ -26,7 +26,7 @@ Pre-run analyses and estimates that can be used by others without re-running the
 Inputs for data analysis can be found in this folder, outputs from running the code will populate here. some intermediate data inputs called in the code are provided, and others can be reproduced.
 * `age_dist_absolute_differences_stdevs.csv` contains country-specific standard deviations for adding age distribution uncertainty based on a comparison of 2010 GPW data and 2020 UN age distribution data
 * `bootstrapped_estimates_country_age_5000_mu_sig.csv` contains results of parametric bootstrapping analysis with mean and standard deviation of vaccination percentage for each age group in each country
-* `cessation_coverage_estimates.csv`, non-updated version of Table S1 that can be used to reproduce results in our paper, contains upper and lower bounds of vaccination coverage and cessation estimates for uncertainty analysis
+* `cessation_coverage_estimates.csv`, version of cessation and coverage estimates that can be used to reproduce results in our paper, contains upper and lower bounds of vaccination coverage and cessation estimates for uncertainty analysis. The latest version of these estimates are provided in `latest_cessation_coverage_estimates.csv`
 * `cleaned_gadm_data_no_shapefile.csv`, GADM data without shapefiles, precursor to mapping 
 * `cleaned_gpw_age_data_props.csv`, cleaned GPW admin-1 level age distribution data
 * `gpw_to_gadm_country_join.csv` and `one_gpw_to_multiple_gadm.csv` allow for correct joining of GPW and GADM data

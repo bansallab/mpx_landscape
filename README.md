@@ -1,6 +1,6 @@
 # The global landscape of smallpox vaccination history -- Data & Code
 
-This repository provides the data and source code for the following study: Juliana C. Taube, Eva C. Rest, James O. Lloyd-Smith, Shweta Bansal. "The global landscape of smallpox vaccination history: Implications for current and future orthopoxvirus susceptibility." https://doi.org/10.1101/2022.07.29.22278217
+This repository provides the data and source code for the following study: Juliana C. Taube, Eva C. Rest, James O. Lloyd-Smith, Shweta Bansal. "The global landscape of smallpox vaccination history and implications for current and future orthopoxvirus susceptibility: a modelling study." The Lancet Infectious Diseases. https://doi.org/10.1016/S1473-3099(22)00664-8
 
 ## How to use this resource
 To rerun the analysis and reproduce the figures, start by opening `mpx_landscape.Rproj`. You will need to download GADM shapefile data version 4.0 to reproduce the maps and US Census data to reproduce fine US estimates. From here, run the `make_figures.R` script to reproduce the main figures in the text and many of the supplementary figures. To reproduce Figure 3, run the `global_susceptibility_profiles.R` script. Brief descriptions of the other scripts can be found below.

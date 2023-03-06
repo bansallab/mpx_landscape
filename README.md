@@ -1,4 +1,4 @@
-# Data and Code for "The global landscape of smallpox vaccination history and implications for current and future orthopoxvirus susceptibility: a modelling study."
+# Data and code for "The global landscape of smallpox vaccination history and implications for current and future orthopoxvirus susceptibility: a modelling study."
 
 This repository provides the data and source code for the following study: Juliana C. Taube, Eva C. Rest, James O. Lloyd-Smith, Shweta Bansal. "The global landscape of smallpox vaccination history and implications for current and future orthopoxvirus susceptibility: a modelling study." The Lancet Infectious Diseases. https://doi.org/10.1016/S1473-3099(22)00664-8
 
